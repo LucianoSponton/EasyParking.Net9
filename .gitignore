@@ -1,0 +1,16 @@
+Startup.cs
+appsettings.json
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build results
+bin/
+obj/
+Debug/
+Release/
+
+# Otros
+*.log

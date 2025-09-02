@@ -1,0 +1,11 @@
+﻿Cuando solamente se realizaron cambios de codigo en la API, ejemplo:
+- se agrego un nuevo metodo a un Controller, no se hacen los Add ni Update de las migraciones
+(eso es solamente para hacer cambios en la base de datos, 
+por ejemplo si se cambio las propiedades de
+un objeto o se agrego una tabla)
+
+Si solo fue un cambio de codigo en la API nomas, basta con publicar de nuevo la api localmente y copiar los cambios
+en la nubem en su carpeta correspondiente.
+
+//string Uri = "http://localhost:5000";
+//string Uri = "http://40.118.242.96:12595";
