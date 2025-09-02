@@ -72,7 +72,7 @@ namespace Test
                 //var x = GetMisReservas().Result;
                 //var x = GetReservasModalidadDueño(EstadoReserva.ESPERANDO_ARRIBO).Result;
                 //var x = GetAllMisVehiculos().Result;
-                var x = Busqueda().Result;
+                var x = Busqueda("casa").Result;
 
                 //var x = GetAllInclude().Result;
                 //var x = GetVehiculoByPatente("AA658V").Result;
@@ -334,6 +334,28 @@ namespace Test
                 };
 
                 var estacionamiento = await estacionamientoServiceWebApi.Busqueda(filtros);
+                Console.WriteLine("Busqueda Ok");
+                return estacionamiento;
+
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
+
+        static async Task<List<EstacionamientoDTO>> Busqueda(string text)
+        {
+            try
+            {
+                Console.WriteLine("GetAccess");
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
+                EstacionamientoServiceWebApi estacionamientoServiceWebApi = new EstacionamientoServiceWebApi(webapiaccess);
+                Console.WriteLine("Consultando");
+
+                var estacionamiento = await estacionamientoServiceWebApi.Busqueda(text);
                 Console.WriteLine("Busqueda Ok");
                 return estacionamiento;
 

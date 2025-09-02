@@ -316,30 +316,52 @@ namespace EasyParkingAPI.Controllers
             }
         }
 
-        //[HttpGet]
-        //[Route("[action]")]
-        //public async Task<ActionResult<List<Estacionamiento>>> GetAbiertosAsync()
-        //{
-        //    try
-        //    {
-        //        DataContext dataContext = new DataContext();
-        //        var estacionamientos = await dataContext.Estacionamientos.Include("Jornadas.Horarios")
-        //        .Include("TiposDeVehiculosAdmitidos").Where(x => x.Jornadas.Contains(text) || x.Nombre.Contains(text)).ToListAsync();
+        [HttpGet("[action]/{textoBusqueda}")]
+        public async Task<ActionResult<List<EstacionamientoDTO>>> BusquedaAsync(string textoBusqueda)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(textoBusqueda))
+                    return BadRequest("El texto de búsqueda no puede estar vacío.");
 
-        //        if (estacionamientos == null)
-        //        {
-        //            return NotFound();
-        //        }
-        //        return estacionamientos;
+                DataContext dataContext = new DataContext();
 
-        //    }
-        //    catch (Exception e)
-        //    {
+                string texto = textoBusqueda.Trim().ToLower();
 
-        //        return BadRequest(Tools.Tools.ExceptionMessage(e));
-        //    }
-        //}
+                var query = dataContext.Estacionamientos
+                    .Include(e => e.Jornadas)
+                        .ThenInclude(j => j.Horarios)
+                    .Include(e => e.TiposDeVehiculosAdmitidos)
+                    .AsNoTracking()
+                    .Where(e => !e.Inactivo && !e.PublicacionPausada)
+                    .Where(e =>
+                        e.Ciudad.ToLower().Contains(texto) ||
+                        e.Nombre.ToLower().Contains(texto) ||
+                        e.Direccion.ToLower().Contains(texto) ||
+                        e.TipoDeLugar.ToLower().Contains(texto) ||
+                        e.TiposDeVehiculosAdmitidos.Any(v => v.TipoDeVehiculo.ToLower().Contains(texto))
+                    )
+                    .AsQueryable();
 
+                var estacionamientos = await query.ToListAsync();
+
+                List<EstacionamientoDTO> listaDTO = new List<EstacionamientoDTO>();
+
+                foreach (var item in estacionamientos)
+                {
+                    EstacionamientoDTO estacionamientoDTO = new EstacionamientoDTO();
+                    estacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, EstacionamientoDTO>.Copy(item, estacionamientoDTO);
+                    listaDTO.Add(estacionamientoDTO);
+                }
+
+                return Ok(listaDTO);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(Tools.Tools.ExceptionMessage(e));
+            }
+
+        }
 
         [HttpGet]
         [Route("[action]/{estacionamientoId}")]
@@ -414,54 +436,6 @@ namespace EasyParkingAPI.Controllers
             }
 
         }
-
-        [HttpPost]
-        [Route("[action]")]
-        public async Task<ActionResult<List<EstacionamientoDTO>>> BusquedaAsync([FromBody] string textoBusqueda)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(textoBusqueda))
-                    return BadRequest("El texto de búsqueda no puede estar vacío.");
-
-                DataContext dataContext = new DataContext();
-
-                string texto = textoBusqueda.Trim().ToLower();
-
-                var query = dataContext.Estacionamientos
-                    .Include(e => e.Jornadas)
-                        .ThenInclude(j => j.Horarios)
-                    .Include(e => e.TiposDeVehiculosAdmitidos)
-                    .AsNoTracking()
-                    .Where(e => !e.Inactivo && !e.PublicacionPausada)
-                    .Where(e =>
-                        e.Ciudad.ToLower().Contains(texto) ||
-                        e.Nombre.ToLower().Contains(texto) ||
-                        e.Direccion.ToLower().Contains(texto) ||
-                        e.TipoDeLugar.ToLower().Contains(texto) ||
-                        e.TiposDeVehiculosAdmitidos.Any(v => v.TipoDeVehiculo.ToLower().Contains(texto))
-                    )
-                    .AsQueryable();
-
-                var estacionamientos = await query.ToListAsync();
-
-                List<EstacionamientoDTO> listaDTO = new List<EstacionamientoDTO>();
-
-                foreach (var item in estacionamientos)
-                {
-                    EstacionamientoDTO estacionamientoDTO = new EstacionamientoDTO();
-                    estacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, EstacionamientoDTO>.Copy(item, estacionamientoDTO);
-                    listaDTO.Add(estacionamientoDTO);
-                }
-
-                return Ok(listaDTO);
-            }
-            catch (Exception e)
-            {
-                return BadRequest(Tools.Tools.ExceptionMessage(e));
-            }
-        }
-
 
         [HttpPost]
         [Route("[action]")]
