@@ -72,7 +72,8 @@ namespace Test
                 //var x = GetMisReservas().Result;
                 //var x = GetReservasModalidadDueño(EstadoReserva.ESPERANDO_ARRIBO).Result;
                 //var x = GetAllMisVehiculos().Result;
-                var x = Busqueda("casa").Result;
+                //var x = Busqueda("casa").Result;
+                AddReservaFalsa().Wait();
 
                 //var x = GetAllInclude().Result;
                 //var x = GetVehiculoByPatente("AA658V").Result;
@@ -219,6 +220,33 @@ namespace Test
             public string id { get; set; }
             public string nombre { get; set; }
         }
+
+        static async Task AddReservaFalsa()
+        {
+            try
+            {
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "analia@hotmail.com", "analia123", 3, 60);
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
+                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "EasyParkingAdmin", "easyparking123", 3, 180);
+
+                ReseñaServiceWebApi reseñaServiceWebApi = new ReseñaServiceWebApi(webapiaccess);
+
+                await reseñaServiceWebApi.Add(new Reseña());
+
+                Console.WriteLine("Add ReservaFals Ok");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                throw ex;
+            }
+
+        }
+
+
 
         static async Task PruebaLogin()
         {

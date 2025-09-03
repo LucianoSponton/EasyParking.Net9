@@ -4,6 +4,7 @@ using EasyParkingAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EasyParkingAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250903002444_MIG_0010")]
+    partial class MIG_0010
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -241,42 +244,6 @@ namespace EasyParkingAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Reservas");
-                });
-
-            modelBuilder.Entity("Model.Reseña", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Emisor")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("EmisorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("EstacionamientoId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("FechaHora")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Observacion")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("Puntaje")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ReceptorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Reseñas");
                 });
 
             modelBuilder.Entity("Model.Vehiculo", b =>

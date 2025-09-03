@@ -323,6 +323,8 @@ namespace EasyParkingAPI.Controllers
                 DataContext dataContext = new DataContext();
                 var reserva = dataContext.Reservas.Where(x => x.Id == reservaId).FirstOrDefault();
                 reserva.Estado = EstadoReserva.ARRIBO_EXITOSO;
+                reserva.FechaDeArribo = DateTime.Now;
+
                 dataContext.Reservas.Update(reserva);
                 await dataContext.SaveChangesAsync();
                 return Ok();
@@ -343,6 +345,7 @@ namespace EasyParkingAPI.Controllers
                 DataContext dataContext = new DataContext();
                 var reserva = dataContext.Reservas.Where(x => x.Id == reservaId).FirstOrDefault();
                 reserva.Estado = EstadoReserva.SE_HA_MARCHADO;
+                reserva.FechaDeSalida = DateTime.Now;
 
                 var vehiculo = await dataContext.Vehiculos.Where(x => x.Id == reserva.VehiculoId).FirstOrDefaultAsync();
 

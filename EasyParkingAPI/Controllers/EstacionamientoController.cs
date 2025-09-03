@@ -165,6 +165,29 @@ namespace EasyParkingAPI.Controllers
         }
 
         [HttpGet("[action]/{estacionamientoId}")]
+        public async Task<ActionResult<string>> GetDueñoUserIdAsync(int estacionamientoId)
+        {
+            try
+            {
+                DataContext dataContext = new DataContext();
+                var estacionamiento = await dataContext.Estacionamientos.Where(x => x.Id == estacionamientoId).FirstOrDefaultAsync();
+
+                if (estacionamiento == null)
+                {
+                    return NotFound();
+                }
+
+                return estacionamiento.UserId;
+
+            }
+            catch (Exception e)
+            {
+
+                return BadRequest(Tools.Tools.ExceptionMessage(e));
+            }
+        }
+
+        [HttpGet("[action]/{estacionamientoId}")]
         public async Task<ActionResult<List<Estacionamiento>>> GetOrderByReservasAsync()
         {
             try
@@ -394,7 +417,7 @@ namespace EasyParkingAPI.Controllers
         {
             try
             {
-                DataContext dataContext = new DataContext();
+                using var dataContext = new DataContext();
 
                 var query = dataContext.Estacionamientos
                     .Include(e => e.Jornadas)
@@ -418,12 +441,29 @@ namespace EasyParkingAPI.Controllers
                             filtros.TipoDeVehiculos.Contains(v.TipoDeVehiculo)));
                 }
 
-                List<ServiceWebApi.DTO.EstacionamientoDTO> listaDTO = new List<ServiceWebApi.DTO.EstacionamientoDTO>();
-
-
-                foreach (var item in query)
+                // Filtro por ciudad
+                if (!string.IsNullOrWhiteSpace(filtros.Ciudad))
                 {
-                    ServiceWebApi.DTO.EstacionamientoDTO estacionamientoDTO = new ServiceWebApi.DTO.EstacionamientoDTO();
+                    query = query.Where(e => e.Ciudad.Contains(filtros.Ciudad));
+                }
+
+                // Filtro por monto mínimo
+                if (filtros.MontoReservaMinimo.HasValue)
+                {
+                    query = query.Where(e => e.MontoReserva >= filtros.MontoReservaMinimo.Value);
+                }
+
+                // Filtro por monto máximo
+                if (filtros.MontoReservaMaximo.HasValue)
+                {
+                    query = query.Where(e => e.MontoReserva <= filtros.MontoReservaMaximo.Value);
+                }
+
+                var listaDTO = new List<ServiceWebApi.DTO.EstacionamientoDTO>();
+
+                foreach (var item in await query.ToListAsync())
+                {
+                    var estacionamientoDTO = new ServiceWebApi.DTO.EstacionamientoDTO();
                     estacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, ServiceWebApi.DTO.EstacionamientoDTO>.Copy(item, estacionamientoDTO);
                     listaDTO.Add(estacionamientoDTO);
                 }
@@ -434,8 +474,8 @@ namespace EasyParkingAPI.Controllers
             {
                 return BadRequest(Tools.Tools.ExceptionMessage(e));
             }
-
         }
+
 
         [HttpPost]
         [Route("[action]")]

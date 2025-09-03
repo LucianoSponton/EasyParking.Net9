@@ -28,7 +28,7 @@ namespace EasyParkingAPI.Data
         public DbSet<Favorito> Favoritos { get; set; }
         public DbSet<Vehiculo> Vehiculos { get; set; }
         public DbSet<Reserva> Reservas { get; set; }
-
+        public DbSet<Reseña> Reseñas { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -117,8 +117,11 @@ namespace EasyParkingAPI.Data
             modelBuilder.Entity<RangoH>()
                 .HasKey(c => c.Id);
 
-        
-
+            //***************************************************************************************************
+            // RESEÑA
+            //***************************************************************************************************
+            modelBuilder.Entity<Reseña>()
+                .HasKey(c => c.Id);
         }
     }
 }

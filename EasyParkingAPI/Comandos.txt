@@ -1,2 +1,2 @@
-﻿add-migration MIG_0008 -Context DataContext -Project EasyParkingAPI -StartupProject EasyParkingAPI
+﻿add-migration MIG_0011 -Context DataContext -Project EasyParkingAPI -StartupProject EasyParkingAPI
 Update-Database -Context DataContext -Project EasyParkingAPI -StartupProject EasyParkingAPI
