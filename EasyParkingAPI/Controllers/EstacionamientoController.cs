@@ -103,7 +103,19 @@ namespace EasyParkingAPI.Controllers
                 {
                     ServiceWebApi.DTO.EstacionamientoDTO estacionamientoDTO = new ServiceWebApi.DTO.EstacionamientoDTO();
                     estacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, ServiceWebApi.DTO.EstacionamientoDTO>.Copy(item, estacionamientoDTO);
+
+                    // Calculate the average Puntaje, handling empty sequences
+                    var reseñas = await dataContext.Reseñas
+                        .Where(r => r.EstacionamientoId == item.Id)
+                        .ToListAsync();
+                    var averagePuntaje = reseñas.Any() ? reseñas.Average(r => r.Puntaje ?? 0) : 0;
+
+                    estacionamientoDTO.Puntaje = averagePuntaje;
+
                     listaDTO.Add(estacionamientoDTO);
+                    listaDTO.Add(estacionamientoDTO);
+
+
                 }
 
                 return listaDTO;
@@ -374,6 +386,15 @@ namespace EasyParkingAPI.Controllers
                 {
                     EstacionamientoDTO estacionamientoDTO = new EstacionamientoDTO();
                     estacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, EstacionamientoDTO>.Copy(item, estacionamientoDTO);
+
+                    // Calculate the average Puntaje, handling empty sequences
+                    var reseñas = await dataContext.Reseñas
+                        .Where(r => r.EstacionamientoId == item.Id)
+                        .ToListAsync();
+                    var averagePuntaje = reseñas.Any() ? reseñas.Average(r => r.Puntaje ?? 0) : 0;
+
+                    estacionamientoDTO.Puntaje = averagePuntaje;
+
                     listaDTO.Add(estacionamientoDTO);
                 }
 
@@ -465,6 +486,15 @@ namespace EasyParkingAPI.Controllers
                 {
                     var estacionamientoDTO = new ServiceWebApi.DTO.EstacionamientoDTO();
                     estacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, ServiceWebApi.DTO.EstacionamientoDTO>.Copy(item, estacionamientoDTO);
+
+                    // Calculate the average Puntaje, handling empty sequences
+                    var reseñas = await dataContext.Reseñas
+                        .Where(r => r.EstacionamientoId == item.Id)
+                        .ToListAsync();
+                    var averagePuntaje = reseñas.Any() ? reseñas.Average(r => r.Puntaje ?? 0) : 0;
+
+                    estacionamientoDTO.Puntaje = averagePuntaje;
+
                     listaDTO.Add(estacionamientoDTO);
                 }
 
@@ -646,29 +676,43 @@ namespace EasyParkingAPI.Controllers
         [HttpPost]
         [Route("[action]")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
-        public async Task<ActionResult> UploadsAsync([FromBody] IFormFile file)
+        public async Task<ActionResult> UploadsAsync([FromForm] IFormFile file)
         {
             try
             {
-                List<FileUploadResult> fileUploadResults = new List<FileUploadResult>();
+                if (file == null || file.Length == 0)
+                    return BadRequest("No se recibió ningún archivo");
 
-                string fileName = Path.GetFileName(file.FileName);
-                var path = Path.Combine(_configuration.GetValue<string>("EasyParkingAPI:Images:Estacionamientos_Folder"), fileName);
+                // Carpeta desde config
+                var folder = _configuration.GetValue<string>("EasyParkingAPI:Images:Estacionamientos_Folder");
 
-                var stream = new FileStream(path, FileMode.Create);
+                if (string.IsNullOrEmpty(folder))
+                    return BadRequest("Ruta de almacenamiento no configurada");
+
+                if (!Directory.Exists(folder))
+                    Directory.CreateDirectory(folder);
+
+                // Nombre único
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                var path = Path.Combine(folder, fileName);
+
+                using var stream = new FileStream(path, FileMode.Create);
                 await file.CopyToAsync(stream);
-                stream.Close();
-                fileUploadResults.Add(new FileUploadResult() { Length = file.Length, Name = file.FileName });
 
-                return Ok(fileUploadResults);
+                var result = new FileUploadResult()
+                {
+                    Length = file.Length,
+                    Name = fileName
+                };
+
+                return Ok(result);
             }
             catch (Exception e)
             {
-
-                return BadRequest(Tools.Tools.ExceptionMessage(e));
+                // Aquí capturás la excepción real para debug
+                return StatusCode(500, $"Error interno: {e.Message}");
             }
         }
-
 
         [HttpPost]
         [Route("[action]")]

@@ -21,4 +21,5 @@ namespace EasyParkingAPI.Model
         public string Link_Foto { get; set; }
         public string Apodo { get; set; }
     }
+
 }

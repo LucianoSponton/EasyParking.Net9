@@ -73,7 +73,6 @@ namespace EasyParkingAPI.Controllers
             if (ModelState.IsValid)
             {
                 return await _CreateUserAsync(model);
-
             }
             else
             {
@@ -493,7 +492,6 @@ namespace EasyParkingAPI.Controllers
                                 Telefono = userinfo.Telefono,
                                 Sexo = userinfo.Sexo,
                                 EmailConfirmed = true
-
                             };
                             var result = await _userManager.CreateAsync(appuser, userinfo.Password);
                             if (result.Succeeded)
@@ -537,7 +535,7 @@ namespace EasyParkingAPI.Controllers
                         {
                             //scope.Dispose();
                             _EasyParkingAuthContext.Database.RollbackTransaction();
-                            return BadRequest("ERROR ... " + estado + " - Error message: " + ex.Message);
+                            return BadRequest("ERROR ... " + estado + " - Error message: " + ex.Message + ex.InnerException.Message);
                         }
                     }
                 });
@@ -612,6 +610,7 @@ namespace EasyParkingAPI.Controllers
                     var user = _httpContextAccessor.HttpContext.User;
                     ApplicationUser appuser = _userManager.FindByNameAsync(user.Identity.Name).Result;
                     UserInfo userInfo = new UserInfo();
+                    userInfo.UserId = appuser.Id;
                     userInfo.Nombre = appuser.Nombre;
                     userInfo.Apellido = appuser.Apellido;
                     userInfo.Email = appuser.Email;

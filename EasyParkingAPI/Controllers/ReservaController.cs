@@ -78,45 +78,84 @@ namespace EasyParkingAPI.Controllers
         }
 
         [HttpGet]
-        [Route("[action]")]
-        public async Task<ActionResult<List<ReservaDTO>>> GetMisReservasAsync()
+        [Route("[action]/{estado}")]
+        public async Task<ActionResult<List<ReservaDTO>>> GetMisReservasAsync(EstadoReserva estado)
         {
             try
             {
-                DataContext dataContext = new DataContext();
+                using var dataContext = new DataContext();
 
-                var reservas = dataContext.Reservas.Where(x => x.UserId == _UserId).AsNoTracking().ToList();
+                IQueryable<Reserva> query = dataContext.Reservas
+                    .Where(x => x.UserId == _UserId)
+                    .AsNoTracking();
 
-                if (reservas == null)
+                // Aplicamos filtros según el estado recibido
+                switch (estado)
                 {
-                    return NotFound();
+                    case EstadoReserva.NONE:
+                        query = query.Where(x => x.Estado == EstadoReserva.ESPERANDO_ARRIBO
+                                              || x.Estado == EstadoReserva.ARRIBO_EXITOSO);
+                        break;
+
+                    case EstadoReserva.ESPERANDO_ARRIBO:
+                        query = query.Where(x => x.Estado == EstadoReserva.ESPERANDO_ARRIBO);
+                        break;
+
+                    case EstadoReserva.ARRIBO_EXITOSO:
+                        query = query.Where(x => x.Estado == EstadoReserva.ARRIBO_EXITOSO);
+                        break;
+
+                    case EstadoReserva.CANCELADO_POR_EL_CLIENTE:
+                    case EstadoReserva.CANCELADO_POR_EL_DUEÑO:
+                    case EstadoReserva.CANCELADO_POR_TIEMPO_EXPIRADO:
+                        query = query.Where(x => x.Estado == EstadoReserva.CANCELADO_POR_EL_CLIENTE
+                                              || x.Estado == EstadoReserva.CANCELADO_POR_EL_DUEÑO
+                                              || x.Estado == EstadoReserva.CANCELADO_POR_TIEMPO_EXPIRADO);
+                        break;
+
+                    case EstadoReserva.SE_HA_MARCHADO:
+                        query = query.Where(x => x.Estado == EstadoReserva.SE_HA_MARCHADO);
+                        break;
+
+                    case EstadoReserva.TODOS:
+                        // no filtramos nada extra
+                        break;
+
+                    default:
+                        return BadRequest("Estado no válido");
                 }
+
+                var reservas = await query.ToListAsync();
+
+                if (!reservas.Any())
+                    return NotFound("No hay reservas en este estado");
 
                 List<ReservaDTO> listaDTO = new List<ReservaDTO>();
 
                 foreach (var item in reservas)
                 {
-                    ServiceWebApi.DTO.ReservaDTO reservaDTO = new ServiceWebApi.DTO.ReservaDTO();
-                    reservaDTO = Tools.Tools.PropertyCopier<Reserva, ServiceWebApi.DTO.ReservaDTO>.Copy(item, reservaDTO);
-                    
-                    var estacionamiento = await dataContext.Estacionamientos.Include("Jornadas.Horarios").AsNoTracking()
-                                                        .Include("TiposDeVehiculosAdmitidos").AsNoTracking().Where(x => x.Id == item.EstacionamientoId).FirstOrDefaultAsync();
+                    ReservaDTO reservaDTO = Tools.Tools.PropertyCopier<Reserva, ReservaDTO>.Copy(item, new ReservaDTO());
 
-                    ServiceWebApi.DTO.EstacionamientoDTO estacionamientoDTO = new ServiceWebApi.DTO.EstacionamientoDTO();
-                    reservaDTO.EstacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, ServiceWebApi.DTO.EstacionamientoDTO>.Copy(estacionamiento, estacionamientoDTO);
-                    //reservaDTO.EstacionamientoDTO.Jornadas = estacionamiento.Jornadas;
-                    //reservaDTO.EstacionamientoDTO.TiposDeVehiculosAdmitidos = estacionamiento.TiposDeVehiculosAdmitidos;
+                    var estacionamiento = await dataContext.Estacionamientos
+                        .Include(e => e.Jornadas)
+                            .ThenInclude(j => j.Horarios)
+                        .Include(e => e.TiposDeVehiculosAdmitidos)
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.Id == item.EstacionamientoId);
+
+                    if (estacionamiento != null)
+                    {
+                        EstacionamientoDTO estacionamientoDTO = new EstacionamientoDTO();
+                        reservaDTO.EstacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, EstacionamientoDTO>.Copy(estacionamiento, estacionamientoDTO);
+                    }
 
                     listaDTO.Add(reservaDTO);
                 }
 
-               
-
-                return listaDTO;
+                return Ok(listaDTO);
             }
             catch (Exception e)
             {
-
                 return BadRequest(Tools.Tools.ExceptionMessage(e));
             }
         }
@@ -240,7 +279,13 @@ namespace EasyParkingAPI.Controllers
 
                 var vehiculo = await dataContext.Vehiculos.Where(x => x.Id == reserva.VehiculoId).FirstOrDefaultAsync();
 
+                if(vehiculo == null)
+                    return BadRequest("ERROR.. No se encontro su vehículo");
+
                 var datoVehiculoSobreAlojado = await dataContext.DataVehiculoAlojados.Where(x => x.EstacionamientoId == reserva.EstacionamientoId && x.TipoDeVehiculo == vehiculo.TipoDeVehiculo).FirstOrDefaultAsync();
+
+                if (datoVehiculoSobreAlojado == null)
+                    return BadRequest($"ERROR.. El tipo de su vehículo ({vehiculo.TipoDeVehiculo}) no puede ser alojado en este lugar, ya que no es admitido");
 
                 if (datoVehiculoSobreAlojado.CapacidadDeAlojamiento > datoVehiculoSobreAlojado.CantidadActualAlojados)
                 {
@@ -284,13 +329,77 @@ namespace EasyParkingAPI.Controllers
         [HttpPost]
         [Route("[action]")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
-        public async Task<ActionResult> SetReservaCanceladaAsync([FromBody] int reservaId)
+        public async Task<ActionResult> SetReservaCanceladaPorElClienteAsync([FromBody] int reservaId)
         {
             try
             {
                 DataContext dataContext = new DataContext();
                 var reserva = dataContext.Reservas.Where(x => x.Id == reservaId).FirstOrDefault();
-                reserva.Estado = EstadoReserva.CANCELADO;
+                reserva.Estado = EstadoReserva.CANCELADO_POR_EL_CLIENTE;
+
+                var vehiculo = await dataContext.Vehiculos.Where(x => x.Id == reserva.VehiculoId).FirstOrDefaultAsync();
+
+                var datoVehiculoSobreAlojado = await dataContext.DataVehiculoAlojados.Where(x => x.EstacionamientoId == reserva.EstacionamientoId && x.TipoDeVehiculo == vehiculo.TipoDeVehiculo).FirstOrDefaultAsync();
+
+                if (datoVehiculoSobreAlojado.CantidadActualAlojados > 0)
+                {
+                    datoVehiculoSobreAlojado.CantidadActualAlojados--;
+                }
+
+                dataContext.DataVehiculoAlojados.Update(datoVehiculoSobreAlojado);
+
+                dataContext.Reservas.Update(reserva);
+                await dataContext.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(Tools.Tools.ExceptionMessage(e));
+            }
+        }
+
+        [HttpPost]
+        [Route("[action]")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
+        public async Task<ActionResult> SetReservaCanceladaPorElDueñoAsync([FromBody] int reservaId)
+        {
+            try
+            {
+                DataContext dataContext = new DataContext();
+                var reserva = dataContext.Reservas.Where(x => x.Id == reservaId).FirstOrDefault();
+                reserva.Estado = EstadoReserva.CANCELADO_POR_EL_DUEÑO;
+
+                var vehiculo = await dataContext.Vehiculos.Where(x => x.Id == reserva.VehiculoId).FirstOrDefaultAsync();
+
+                var datoVehiculoSobreAlojado = await dataContext.DataVehiculoAlojados.Where(x => x.EstacionamientoId == reserva.EstacionamientoId && x.TipoDeVehiculo == vehiculo.TipoDeVehiculo).FirstOrDefaultAsync();
+
+                if (datoVehiculoSobreAlojado.CantidadActualAlojados > 0)
+                {
+                    datoVehiculoSobreAlojado.CantidadActualAlojados--;
+                }
+
+                dataContext.DataVehiculoAlojados.Update(datoVehiculoSobreAlojado);
+
+                dataContext.Reservas.Update(reserva);
+                await dataContext.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(Tools.Tools.ExceptionMessage(e));
+            }
+        }
+
+        [HttpPost]
+        [Route("[action]")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
+        public async Task<ActionResult> SetReservaCanceladaPorTiempoExpiradoAsync([FromBody] int reservaId)
+        {
+            try
+            {
+                DataContext dataContext = new DataContext();
+                var reserva = dataContext.Reservas.Where(x => x.Id == reservaId).FirstOrDefault();
+                reserva.Estado = EstadoReserva.CANCELADO_POR_TIEMPO_EXPIRADO;
 
                 var vehiculo = await dataContext.Vehiculos.Where(x => x.Id == reserva.VehiculoId).FirstOrDefaultAsync();
 

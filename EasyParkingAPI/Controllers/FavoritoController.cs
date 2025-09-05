@@ -107,7 +107,7 @@ namespace EasyParkingAPI.Controllers
 
                 if (estacionamientos == null || estacionamientos.Count == 0)
                 {
-                    return NotFound();
+                    return NotFound("No tienes favoritos.");
                 }
 
                 return estacionamientos;

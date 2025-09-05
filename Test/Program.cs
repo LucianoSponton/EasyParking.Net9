@@ -73,7 +73,9 @@ namespace Test
                 //var x = GetReservasModalidadDueño(EstadoReserva.ESPERANDO_ARRIBO).Result;
                 //var x = GetAllMisVehiculos().Result;
                 //var x = Busqueda("casa").Result;
-                AddReservaFalsa().Wait();
+                //var x = Busqueda().Result;
+                CrearUsuaio().Wait();
+                // GetReseñas().Wait();
 
                 //var x = GetAllInclude().Result;
                 //var x = GetVehiculoByPatente("AA658V").Result;
@@ -221,6 +223,31 @@ namespace Test
             public string nombre { get; set; }
         }
 
+        static async Task GetReseñas()
+        {
+            try
+            {
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "analia@hotmail.com", "analia123", 3, 60);
+                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "EasyParkingAdmin", "easyparking123", 3, 180);
+
+                ReseñaServiceWebApi reseñaServiceWebApi = new ReseñaServiceWebApi(webapiaccess);
+
+                var z = await reseñaServiceWebApi.GetByEstacionamiento(26);
+
+                Console.WriteLine("Add ReservaFals Ok");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                throw ex;
+            }
+
+        }
+
         static async Task AddReservaFalsa()
         {
             try
@@ -246,6 +273,34 @@ namespace Test
 
         }
 
+        static async Task CrearUsuaio()
+        {
+            try
+            {
+
+                var userInfo = new UserInfo
+                {
+                    UserName = "admin5",
+                    Email = "admin5",
+                    Apellido = "admin5",
+                    Nombre = "admin5",
+                    Password = "12345678",
+                    FechaDeNacimiento = new DateTime(2000, 1, 5),
+                    NumeroDeDocumento = "123456789",
+                    TipoDeDocumento = TipoDeDocumento.DNI,
+                    Telefono = "3666985487",
+                    Sexo = TipoDeSexo.HOMBRE,
+                };
+
+
+                await WebApiAccess.CreateUserAsync(Uri, userInfo);
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
 
 
         static async Task PruebaLogin()
@@ -807,18 +862,19 @@ namespace Test
         {
             try
             {
-                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+               // var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
                 //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "analia@hotmail.com", "analia123", 3, 60);
+                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
 
                 ReservaServiceWebApi reservaServiceWebApi = new ReservaServiceWebApi(webapiaccess);
 
-                Reserva reserva = new Reserva();
-                reserva.EstacionamientoId = 1;
-                reserva.VehiculoId = 1;
-                reserva.Monto = 180;
-                reserva.Patente = "PP58DF";
-                reserva.Estado = Model.Enums.EstadoReserva.CANCELADO;
-                reserva.CodigoDeValidacion = "AS567GF";
+                Model.Reserva reserva = new Model.Reserva();
+                reserva.CodigoDeValidacion = "DFERTYGH";
+                reserva.EstacionamientoId = 30;
+                reserva.Monto = 321;
+                reserva.Patente = "AS345SQ";
+                reserva.VehiculoId = 28;
+                reserva.Estado = Model.Enums.EstadoReserva.ESPERANDO_ARRIBO;
 
                 await reservaServiceWebApi.Add(reserva);
 
@@ -845,7 +901,7 @@ namespace Test
                 //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "analia@hotmail.com", "analia123", 3, 60);
                 ReservaServiceWebApi reservaServiceWebApi = new ReservaServiceWebApi(webapiaccess);
                 Console.WriteLine("Consultando");
-                var x = await reservaServiceWebApi.GetMisReservas();
+                var x = await reservaServiceWebApi.GetMisReservas(EstadoReserva.NONE);
                 return x;
             }
             catch (Exception ex)
