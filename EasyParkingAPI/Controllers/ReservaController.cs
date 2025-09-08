@@ -276,7 +276,7 @@ namespace EasyParkingAPI.Controllers
             {
                 DataContext dataContext = new DataContext();
                 reserva.UserId = _UserId;
-
+               
                 var vehiculo = await dataContext.Vehiculos.Where(x => x.Id == reserva.VehiculoId).FirstOrDefaultAsync();
 
                 if(vehiculo == null)

@@ -1,22 +1,25 @@
+using EasyParking.API;
 using EasyParkingAPI;
 using EasyParkingAPI.Data;
-using EasyParkingAPI.Model;
 using EasyParkingAPI.Data;
+using EasyParkingAPI.Model;
 using EasyParkingAPI.Model;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using EasyParking.API;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System;
+using System.IO;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // ======================================================
 // ?? Leer configuración
@@ -155,6 +158,32 @@ if (app.Environment.IsDevelopment())
         await createUsersAndRoles.CreateUsersAsync();
     }
 }
+
+// Habilitar archivos estáticos para Estacionamientos
+var estacionamientosFolder = builder.Configuration.GetValue<string>("EasyParkingAPI:Images:Estacionamientos_Folder");
+
+if (!string.IsNullOrEmpty(estacionamientosFolder) && Directory.Exists(estacionamientosFolder))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(estacionamientosFolder),
+        RequestPath = "/images/estacionamientos"
+    });
+}
+
+// Habilitar archivos estáticos para Usuarios
+var usuariosFolder = builder.Configuration.GetValue<string>("EasyParkingAPI:Images:Usuarios_Folder");
+
+if (!string.IsNullOrEmpty(usuariosFolder) && Directory.Exists(usuariosFolder))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(usuariosFolder),
+        RequestPath = "/images/usuarios"
+    });
+}
+
+
 
 app.UseHttpsRedirection();
 app.UseCors("CorsPolicy");

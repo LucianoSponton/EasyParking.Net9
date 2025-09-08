@@ -14,6 +14,7 @@ using Model;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -68,18 +69,113 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        public async Task<ActionResult> CreateUser([FromBody] UserInfo model)
+        public async Task<ActionResult> CreateUser([FromBody] UserInfo userinfo)
         {
             if (ModelState.IsValid)
             {
-                return await _CreateUserAsync(model);
+                string estado = "Iniciando";
+                if (userinfo == null)
+                {
+                    return BadRequest("ERROR. Datos No Válidos ...");
+                }
+
+                var strategy = _EasyParkingAuthContext.Database.CreateExecutionStrategy();
+                try
+                {
+                    var result = await strategy.ExecuteAsync<ActionResult>(async () =>
+                    {
+                        using (var transaction = _EasyParkingAuthContext.Database.BeginTransaction())
+                        {
+                            try
+                            {
+                                estado = "Creando Usuario";
+                                var appuser = new ApplicationUser
+                                {
+                                    UserName = userinfo.Email.ToLower(),
+                                    Email = userinfo.Email.ToLower(),
+                                    Apellido = userinfo.Apellido,
+                                    Nombre = userinfo.Nombre,
+                                    FechaDeNacimiento = userinfo.FechaDeNacimiento,
+                                    NumeroDeDocumento = userinfo.NumeroDeDocumento,
+                                    TipoDeDocumento = userinfo.TipoDeDocumento,
+                                    Telefono = userinfo.Telefono,
+                                    Sexo = userinfo.Sexo,
+                                    EmailConfirmed = true
+                                };
+
+                                var result = await _userManager.CreateAsync(appuser, userinfo.Password);
+                                if (result.Succeeded)
+                                {
+                                    // Guardar foto si viene
+                                    if (userinfo.FotoDePerfil != null && userinfo.FotoDePerfil.Length > 0)
+                                    {
+                                        var folder = _configuration.GetValue<string>("EasyParkingAPI:Images:Usuarios_Folder");
+
+                                        if (string.IsNullOrEmpty(folder))
+                                            return BadRequest("Ruta de almacenamiento no configurada");
+
+                                        if (!Directory.Exists(folder))
+                                            Directory.CreateDirectory(folder);
+
+                                        var fileName = appuser.Id + ".jpg";
+                                        var path = Path.Combine(folder, fileName);
+
+                                        await System.IO.File.WriteAllBytesAsync(path, userinfo.FotoDePerfil);
+
+                                        // Actualizar Link_Foto con la URL pública
+                                        appuser.Link_Foto = $"http://40.118.242.96:12595/images/usuarios/{fileName}";
+                                        await _userManager.UpdateAsync(appuser);
+                                    }
+
+                                    estado = "Adhiriendo Usuario a Rol";
+                                    var result02 = await _userManager.AddToRoleAsync(appuser, "AppUser");
+                                    if (result02.Succeeded)
+                                    {
+                                        if (!appuser.EmailConfirmed)
+                                        {
+                                            estado = "Enviando eMail de Confirmacion";
+                                            var token = await _userManager.GenerateEmailConfirmationTokenAsync(appuser);
+                                            var callbackUrl = new Uri(Url.Link("ConfirmEmailRoute", new { userId = appuser.Id, token = token }));
+                                            Sender mailKit = new Sender(_From_SmtpServer, _From_SmtpServerPort, true, _From_Name, _From_EmailAdress, _From_EmailPassword);
+                                            mailKit.Send(appuser.UserName, appuser.Email, "Confirma tu Cuenta",
+                                                $"<h2>{appuser.UserName}</h2>" + Environment.NewLine +
+                                                $"<a href=\"{callbackUrl}\"> Por favor confirme su cuenta haciendo click aqui. </a>");
+                                        }
+
+                                        _EasyParkingAuthContext.Database.CommitTransaction();
+                                        return Ok(new { appuser.Id, appuser.Link_Foto });
+                                    }
+                                    else
+                                    {
+                                        throw new Exception(result02.Errors.ToString());
+                                    }
+                                }
+                                else
+                                {
+                                    _EasyParkingAuthContext.Database.RollbackTransaction();
+                                    return BadRequest(result.Errors.ToList());
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _EasyParkingAuthContext.Database.RollbackTransaction();
+                                return BadRequest("ERROR ... " + estado + " - Error message: " + ex.Message + (ex.InnerException?.Message ?? ""));
+                            }
+                        }
+                    });
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest("ERROR ... " + ex.Message);
+                }
             }
             else
             {
                 return BadRequest(ModelState);
             }
-
         }
+
 
         [HttpPost]
         [Route("[action]")]
@@ -89,19 +185,46 @@ namespace EasyParkingAPI.Controllers
             try
             {
                 var user = _httpContextAccessor.HttpContext.User;
-                ApplicationUser appuser = _userManager.FindByNameAsync(user.Identity.Name).Result;
+                ApplicationUser appuser = await _userManager.FindByNameAsync(user.Identity.Name);
+
+                if (appuser == null)
+                    return NotFound("Usuario no encontrado");
+
+                // Actualizamos propiedades básicas
                 appuser.Telefono = userinfo.Telefono;
                 appuser.Apodo = userinfo.Apodo;
-                appuser.FotoDePerfil = userinfo.FotoDePerfil;
+
+                // Guardar/Actualizar imagen de perfil
+                if (userinfo.FotoDePerfil != null && userinfo.FotoDePerfil.Length > 0)
+                {
+                    var folder = _configuration.GetValue<string>("EasyParkingAPI:Images:Usuarios_Folder");
+
+                    if (string.IsNullOrEmpty(folder))
+                        return BadRequest("Ruta de almacenamiento no configurada");
+
+                    if (!Directory.Exists(folder))
+                        Directory.CreateDirectory(folder);
+
+                    // Nombre del archivo = UserId.jpg
+                    var fileName = appuser.Id + ".jpg";
+                    var path = Path.Combine(folder, fileName);
+
+                    // Sobrescribir la imagen si ya existe
+                    await System.IO.File.WriteAllBytesAsync(path, userinfo.FotoDePerfil);
+
+                    // Actualizar URL pública de la foto
+                    appuser.Link_Foto = $"http://40.118.242.96:12595/images/usuarios/{fileName}";
+                }
 
                 await _userManager.UpdateAsync(appuser);
-                return Ok();
+                return Ok(new { appuser.Id, appuser.Link_Foto });
             }
             catch (Exception ex)
             {
                 return BadRequest(Tools.Tools.ExceptionMessage(ex));
             }
         }
+
 
         [HttpPost]
         [Route("[action]")]
@@ -462,92 +585,7 @@ namespace EasyParkingAPI.Controllers
             return new string(chars.ToArray());
         }
 
-        private async Task<ActionResult> _CreateUserAsync(UserInfo userinfo)
-        {
-            string estado = "Iniciando";
-            if (userinfo == null)
-            {
-                return BadRequest("ERROR. Datos No Válidos ...");
-            }
-            //using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            var strategy = _EasyParkingAuthContext.Database.CreateExecutionStrategy();
-            try
-            {
-                var result = await strategy.ExecuteAsync<ActionResult>(async () =>
-                {
-                    using (var transaction = _EasyParkingAuthContext.Database.BeginTransaction())
-                    {
-                        try
-                        {
-                            estado = "Creando Usuario";
-                            var appuser = new ApplicationUser
-                            {
-                                UserName = userinfo.Email.ToLower(),
-                                Email = userinfo.Email.ToLower(),
-                                Apellido = userinfo.Apellido,
-                                Nombre = userinfo.Nombre,
-                                FechaDeNacimiento = userinfo.FechaDeNacimiento,
-                                NumeroDeDocumento = userinfo.NumeroDeDocumento,
-                                TipoDeDocumento = userinfo.TipoDeDocumento,
-                                Telefono = userinfo.Telefono,
-                                Sexo = userinfo.Sexo,
-                                EmailConfirmed = true
-                            };
-                            var result = await _userManager.CreateAsync(appuser, userinfo.Password);
-                            if (result.Succeeded)
-                            {
-                                estado = "Adhiriendo Usuario a Rol";
-                                var result02 = await _userManager.AddToRoleAsync(appuser, "AppUser");
-                                if (result02.Succeeded)
-                                {
-                                    if (!appuser.EmailConfirmed)
-                                    {
-                                        estado = "Enviando eMail de Confirmacion";
-                                        var token = await _userManager.GenerateEmailConfirmationTokenAsync(appuser);
-                                        var callbackUrl = new Uri(Url.Link("ConfirmEmailRoute", new { userId = appuser.Id, token = token }));
-                                        Sender mailKit = new Sender(_From_SmtpServer, _From_SmtpServerPort, true, _From_Name, _From_EmailAdress, _From_EmailPassword);
-                                        mailKit.Send(appuser.UserName, appuser.Email, "Confirma tu Cuenta",
-                                            $"<h2> " + appuser.UserName + "</h2>" + Environment.NewLine +
-                                            "<a href=\"" + callbackUrl + "\"> Por favor confirme su cuenta haciendo click aqui. </a>");
-
-                                        //scope.Complete();
-
-                                    }
-
-                                    _EasyParkingAuthContext.Database.CommitTransaction();
-                                    return Ok();
-                                }
-                                else
-                                {
-                                    throw new Exception(result02.Errors.ToString());
-                                }
-                            }
-                            else
-                            {
-                                //scope.Dispose();
-                                _EasyParkingAuthContext.Database.RollbackTransaction();
-                                return BadRequest(result.Errors.ToList());
-                            }
-
-
-                        }
-                        catch (Exception ex)
-                        {
-                            //scope.Dispose();
-                            _EasyParkingAuthContext.Database.RollbackTransaction();
-                            return BadRequest("ERROR ... " + estado + " - Error message: " + ex.Message + ex.InnerException.Message);
-                        }
-                    }
-                });
-                return result;
-
-            }
-            catch (Exception ex)
-            {
-
-                return BadRequest("ERROR ... " + ex.Message);
-            }
-        }
+ 
 
 
         [HttpGet("[action]/{username}")]
@@ -622,6 +660,7 @@ namespace EasyParkingAPI.Controllers
                     userInfo.FotoDePerfil = appuser.FotoDePerfil;
                     userInfo.FechaDeNacimiento = appuser.FechaDeNacimiento;
                     userInfo.Sexo = appuser.Sexo;
+                    userInfo.Link_Foto = appuser.Link_Foto;
                     return userInfo;
                 }
                 else

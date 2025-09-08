@@ -976,7 +976,7 @@ namespace Test
                 Console.WriteLine("Preparando Estacionamiento");
 
 
-                Estacionamiento estacionamiento = new Estacionamiento();
+                EstacionamientoDTO estacionamiento = new EstacionamientoDTO();
 
                 Random numRandom = new Random();
 
@@ -1110,7 +1110,7 @@ namespace Test
                 Console.WriteLine("Preparando Estacionamiento");
 
 
-                Estacionamiento estacionamiento = new Estacionamiento();
+                EstacionamientoDTO estacionamiento = new EstacionamientoDTO();
 
                 Random numRandom = new Random();
 

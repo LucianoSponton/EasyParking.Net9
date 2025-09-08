@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace EasyParkingAPI.Controllers
 {
@@ -130,18 +131,38 @@ namespace EasyParkingAPI.Controllers
 
         [HttpGet]
         [Route("[action]")]
-        public async Task<ActionResult<List<Estacionamiento>>> GetMisEstacionamientosAsync()
+        public async Task<ActionResult<List<EstacionamientoDTO>>> GetMisEstacionamientosAsync()
         {
             try
             {
                 DataContext dataContext = new DataContext();
                 var lista = await dataContext.Estacionamientos.Include("Jornadas.Horarios")
                 .Include("TiposDeVehiculosAdmitidos").Where(x => x.UserId == _UserId && x.Inactivo == false).AsNoTracking().ToListAsync(); // Retorna los estacionamientos de la persona logeada
+               
                 if (lista == null)
                 {
                     return NotFound();
                 }
-                return lista;
+
+                var listaDTO = new List<ServiceWebApi.DTO.EstacionamientoDTO>();
+
+                foreach (var item in lista)
+                {
+                    var estacionamientoDTO = new ServiceWebApi.DTO.EstacionamientoDTO();
+                    estacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, ServiceWebApi.DTO.EstacionamientoDTO>.Copy(item, estacionamientoDTO);
+
+                    // Calculate the average Puntaje, handling empty sequences
+                    var reseñas = await dataContext.Reseñas
+                        .Where(r => r.EstacionamientoId == item.Id)
+                        .ToListAsync();
+                    var averagePuntaje = reseñas.Any() ? reseñas.Average(r => r.Puntaje ?? 0) : 0;
+
+                    estacionamientoDTO.Puntaje = averagePuntaje;
+
+                    listaDTO.Add(estacionamientoDTO);
+                }
+
+                return listaDTO;
 
             }
             catch (Exception e)
@@ -510,55 +531,59 @@ namespace EasyParkingAPI.Controllers
         [HttpPost]
         [Route("[action]")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
-        public async Task<ActionResult> AddAsync([FromBody] Estacionamiento estacionamiento)
+        public async Task<ActionResult> AddAsync([FromBody] EstacionamientoDTO estacionamientoDTO)
         {
             try
             {
                 DataContext dataContext = new DataContext();
+
+                // Copiamos los datos básicos
+                Estacionamiento estacionamiento = new Estacionamiento();
+                estacionamiento = Tools.Tools.PropertyCopier<EstacionamientoDTO, Estacionamiento>.Copy(estacionamientoDTO, estacionamiento);
                 estacionamiento.UserId = _UserId;
                 estacionamiento.FechaCreacion = DateTime.Now;
 
+                // Guardamos primero el estacionamiento para obtener el Id
                 await dataContext.Estacionamientos.AddAsync(estacionamiento);
                 await dataContext.SaveChangesAsync();
-                return Ok();
 
-                //var ExisteUnoConMismoNombre = dataContext.Estacionamientos.Any(x => x.Nombre == estacionamiento.Nombre && x.UserId == _UserId); // De mis estacionamientos
-                //var ExisteUnoConMismaDireccion = dataContext.Estacionamientos.Any(x => x.Direccion == estacionamiento.Direccion && x.Ciudad == estacionamiento.Ciudad && x.UserId == _UserId);  // De mis estacionamientos
-                //var ExisteUnoConMismaDireccion_QueNoEsMio = dataContext.Estacionamientos.Any(x => x.Direccion == estacionamiento.Direccion && x.Ciudad == estacionamiento.Ciudad);  // De todos los existentes estacionamientos
+                string fileName = null;
 
-                //if (ExisteUnoConMismoNombre == false)
-                //{
-                //    if (ExisteUnoConMismaDireccion == false)
-                //    {
-                //        if (ExisteUnoConMismaDireccion_QueNoEsMio == false)
-                //        {
+                // Guardar imagen si viene
+                if (estacionamientoDTO.ImageBytes != null && estacionamientoDTO.ImageBytes.Length > 0)
+                {
+                    // Carpeta desde configuración
+                    var folder = _configuration.GetValue<string>("EasyParkingAPI:Images:Estacionamientos_Folder");
 
-                //            await dataContext.Estacionamientos.AddAsync(estacionamiento);
-                //            await dataContext.SaveChangesAsync();
-                //            return Ok();
-                //        }
-                //        else
-                //        {
-                //            return BadRequest("Alguien mas ya registro un estacionamiento con la misma dirección y en la misma ciudad. Revise su información");
-                //        }
-                //    }
-                //    else
-                //    {
-                //        return BadRequest("Usted ya tiene un estacionamiento con la misma dirección y en la misma ciudad.");
-                //    }
-                //}
-                //else
-                //{
-                //    return BadRequest("Usted ya tiene un estacionamiento con el mismo nombre, debe elegir otro diferente.");
-                //}
+                    if (string.IsNullOrEmpty(folder))
+                        return BadRequest("Ruta de almacenamiento no configurada");
 
+                    if (!Directory.Exists(folder))
+                        Directory.CreateDirectory(folder);
 
+                    // Nombre del archivo = Id del estacionamiento + extensión
+                    fileName = estacionamiento.Id + ".jpg";
+                    var path = Path.Combine(folder, fileName);
+
+                    await System.IO.File.WriteAllBytesAsync(path, estacionamientoDTO.ImageBytes);
+                }
+
+                // Si se guardó imagen, actualizar la URL pública
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    estacionamiento.URL = $"http://40.118.242.96:12595/images/estacionamientos/{fileName}";
+                    dataContext.Estacionamientos.Update(estacionamiento);
+                    await dataContext.SaveChangesAsync();
+                }
+
+                return Ok(new { estacionamiento.Id, estacionamiento.URL });
             }
             catch (Exception e)
             {
                 return BadRequest(Tools.Tools.ExceptionMessage(e));
             }
         }
+
 
         [HttpPost]
         [Route("[action]")]
@@ -648,30 +673,65 @@ namespace EasyParkingAPI.Controllers
         [HttpPost]
         [Route("[action]")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
-        public async Task<ActionResult> UpdateAsync([FromBody] Estacionamiento estacionamiento)
+        public async Task<ActionResult> UpdateAsync([FromBody] EstacionamientoDTO estacionamientoDTO)
         {
             try
             {
                 DataContext dataContext = new DataContext();
-                var lista_TipoVehiculosAlojados = dataContext.DataVehiculoAlojados.Where(x => x.EstacionamientoId == estacionamiento.Id);
+
+                // Obtenemos el estacionamiento existente
+                var estacionamiento = await dataContext.Estacionamientos
+                    .FirstOrDefaultAsync(x => x.Id == estacionamientoDTO.Id);
+
+                if (estacionamiento == null)
+                    return NotFound("Estacionamiento no encontrado");
+
+                // Copiamos propiedades editables
+                estacionamiento = Tools.Tools.PropertyCopier<EstacionamientoDTO, Estacionamiento>
+                    .Copy(estacionamientoDTO, estacionamiento);
+
+                // Manejo de Tipos de Vehículos
+                var lista_TipoVehiculosAlojados = dataContext.DataVehiculoAlojados
+                    .Where(x => x.EstacionamientoId == estacionamiento.Id);
 
                 foreach (var item in lista_TipoVehiculosAlojados)
                 {
-                    if (!item.Id.Equals(estacionamiento.TiposDeVehiculosAdmitidos))
-                    {
-                        dataContext.DataVehiculoAlojados.Remove(item);
-                    }
+                    dataContext.DataVehiculoAlojados.Remove(item);
                 }
+
+                // Guardar/Actualizar imagen
+                string fileName = null;
+                if (estacionamientoDTO.ImageBytes != null && estacionamientoDTO.ImageBytes.Length > 0)
+                {
+                    var folder = _configuration.GetValue<string>("EasyParkingAPI:Images:Estacionamientos_Folder");
+
+                    if (string.IsNullOrEmpty(folder))
+                        return BadRequest("Ruta de almacenamiento no configurada");
+
+                    if (!Directory.Exists(folder))
+                        Directory.CreateDirectory(folder);
+
+                    // Reemplazar imagen con el mismo nombre
+                    fileName = estacionamiento.Id + ".jpg";
+                    var path = Path.Combine(folder, fileName);
+
+                    await System.IO.File.WriteAllBytesAsync(path, estacionamientoDTO.ImageBytes);
+
+                    // Actualizamos URL pública
+                    estacionamiento.URL = $"http://40.118.242.96:12595/images/estacionamientos/{fileName}";
+                }
+
                 dataContext.Estacionamientos.Update(estacionamiento);
                 await dataContext.SaveChangesAsync();
-                return Ok();
+
+                return Ok(new { estacionamiento.Id, estacionamiento.URL });
             }
             catch (Exception e)
             {
-
                 return BadRequest(Tools.Tools.ExceptionMessage(e));
             }
         }
+
 
         [HttpPost]
         [Route("[action]")]
@@ -692,8 +752,8 @@ namespace EasyParkingAPI.Controllers
                 if (!Directory.Exists(folder))
                     Directory.CreateDirectory(folder);
 
-                // Nombre único
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                // Usar el nombre tal cual viene en el parámetro (ya debería ser único)
+                var fileName = Path.GetFileName(file.FileName); // aseguramos que no vengan rutas extrañas
                 var path = Path.Combine(folder, fileName);
 
                 using var stream = new FileStream(path, FileMode.Create);
@@ -709,9 +769,22 @@ namespace EasyParkingAPI.Controllers
             }
             catch (Exception e)
             {
-                // Aquí capturás la excepción real para debug
                 return StatusCode(500, $"Error interno: {e.Message}");
             }
+        }
+
+        [HttpGet("GetImagen/{fileName}")]
+        public IActionResult GetImagen(string fileName)
+        {
+            var folder = _configuration.GetValue<string>("EasyParkingAPI:Images:Estacionamientos_Folder");
+            var path = Path.Combine(folder, fileName);
+
+            if (!System.IO.File.Exists(path))
+                return NotFound();
+
+            var contentType = "image/" + Path.GetExtension(fileName).TrimStart('.');
+            var fileBytes = System.IO.File.ReadAllBytes(path);
+            return File(fileBytes, contentType);
         }
 
         [HttpPost]
