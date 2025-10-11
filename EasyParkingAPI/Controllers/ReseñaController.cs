@@ -1,19 +1,14 @@
 ﻿using EasyParkingAPI.Data;
-using EasyParkingAPI.DTO;
 using EasyParkingAPI.Model;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Model;
 using ServiceWebApi.DTO;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -116,7 +111,7 @@ namespace EasyParkingAPI.Controllers
             }
         }
 
- 
+
     }
 }
 

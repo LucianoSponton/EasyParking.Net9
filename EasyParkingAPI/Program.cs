@@ -1,8 +1,5 @@
 using EasyParking.API;
-using EasyParkingAPI;
 using EasyParkingAPI.Data;
-using EasyParkingAPI.Data;
-using EasyParkingAPI.Model;
 using EasyParkingAPI.Model;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -43,6 +40,9 @@ builder.Services.AddDbContextPool<EasyParkingAuthContext>(options =>
     .EnableSensitiveDataLogging(false)
 );
 
+// ======================================================
+// ?? Identity con Token Providers (SOLUCIÓN AL ERROR)
+// ======================================================
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(config =>
 {
     config.SignIn.RequireConfirmedEmail = false;
@@ -51,8 +51,19 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(config =>
     config.Password.RequireUppercase = false;
     config.Password.RequireNonAlphanumeric = false;
     config.Password.RequiredLength = 8;
+
+    // Configuración de tokens para reseteo de contraseña y confirmación de email
+    config.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider;
+    config.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultProvider;
 })
-.AddEntityFrameworkStores<EasyParkingAuthContext>();
+.AddEntityFrameworkStores<EasyParkingAuthContext>()
+.AddDefaultTokenProviders(); // ? LÍNEA CRÍTICA AGREGADA
+
+// Configuración del tiempo de vida de los tokens (opcional pero recomendado)
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromHours(3); // Los tokens expiran en 3 horas
+});
 
 builder.Services.AddAuthorization();
 
@@ -121,14 +132,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = "yourdomain.com",
-            ValidAudience = "yourdomain.com",
+            ValidIssuer = "easyparking.ep@gmail.com",
+            ValidAudience = "easyparking.ep@gmail.com",
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
             ClockSkew = TimeSpan.Zero
         });
 
 // ======================================================
-// ?? IIS Config
+// ??? IIS Config
 // ======================================================
 builder.Services.Configure<IISServerOptions>(options =>
 {
@@ -183,16 +194,12 @@ if (!string.IsNullOrEmpty(usuariosFolder) && Directory.Exists(usuariosFolder))
     });
 }
 
-
-
 app.UseHttpsRedirection();
 app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
-
 //app.UseMiddleware<LogUserNameMiddleware>();
 
 app.MapControllers();
 
 app.Run();
-

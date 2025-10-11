@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Model;
 using Model.Enums;
@@ -34,7 +33,7 @@ namespace EasyParkingAPI.Controllers
             try
             {
                 _configuration = configuration;
-                _userManager = userManager; 
+                _userManager = userManager;
                 _EasyParkingAuthContext = EasyParkingAuthContext;
 
                 HttpContext http = httpContextAccessor.HttpContext;
@@ -186,7 +185,7 @@ namespace EasyParkingAPI.Controllers
                     .Where(r => estacionamientoIds.Contains(r.EstacionamientoId) && r.Estado == estado)
                     .AsNoTracking()
                     .ToListAsync();
-          
+
                 if (reservas == null)
                 {
                     return NotFound();
@@ -213,7 +212,7 @@ namespace EasyParkingAPI.Controllers
 
                     listaDTO.Add(reservaDTO);
                 }
- 
+
 
 
                 return listaDTO;
@@ -276,10 +275,10 @@ namespace EasyParkingAPI.Controllers
             {
                 DataContext dataContext = new DataContext();
                 reserva.UserId = _UserId;
-               
+
                 var vehiculo = await dataContext.Vehiculos.Where(x => x.Id == reserva.VehiculoId).FirstOrDefaultAsync();
 
-                if(vehiculo == null)
+                if (vehiculo == null)
                     return BadRequest("ERROR.. No se encontro su vehículo");
 
                 var datoVehiculoSobreAlojado = await dataContext.DataVehiculoAlojados.Where(x => x.EstacionamientoId == reserva.EstacionamientoId && x.TipoDeVehiculo == vehiculo.TipoDeVehiculo).FirstOrDefaultAsync();

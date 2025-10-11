@@ -1,5 +1,4 @@
 ﻿using EasyParkingAPI.Model;
-using EasyParkingAPI.Model;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
 

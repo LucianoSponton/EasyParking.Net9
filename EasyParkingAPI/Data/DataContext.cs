@@ -44,7 +44,7 @@ namespace EasyParkingAPI.Data
             //***************************************************************************************************
             modelBuilder.Entity<Estacionamiento>()
                 .HasKey(e => e.Id);
-            
+
             modelBuilder.Entity<Estacionamiento>()
                 .HasMany(e => e.Jornadas)
                 .WithOne() // No tenemos navegación inversa en Jornada, si quieres puedes poner: .WithOne(j => j.Estacionamiento)
@@ -68,7 +68,7 @@ namespace EasyParkingAPI.Data
 
             modelBuilder.Entity<Vehiculo>()
                 .HasKey(c => c.Id);
-             
+
             modelBuilder.Entity<Vehiculo>()
                 .HasIndex(c => c.Patente).IsUnique();
 

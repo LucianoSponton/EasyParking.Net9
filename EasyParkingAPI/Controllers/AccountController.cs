@@ -1,6 +1,5 @@
 ﻿using EasyParkingAPI.Data;
 using EasyParkingAPI.Model;
-using LSEmailSender.MailKitEmailSender;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Model;
+using NuGet.Protocol.Plugins;
+using ServiceWebApi.DTO;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -133,13 +134,13 @@ namespace EasyParkingAPI.Controllers
                                     {
                                         if (!appuser.EmailConfirmed)
                                         {
-                                            estado = "Enviando eMail de Confirmacion";
-                                            var token = await _userManager.GenerateEmailConfirmationTokenAsync(appuser);
-                                            var callbackUrl = new Uri(Url.Link("ConfirmEmailRoute", new { userId = appuser.Id, token = token }));
-                                            Sender mailKit = new Sender(_From_SmtpServer, _From_SmtpServerPort, true, _From_Name, _From_EmailAdress, _From_EmailPassword);
-                                            mailKit.Send(appuser.UserName, appuser.Email, "Confirma tu Cuenta",
-                                                $"<h2>{appuser.UserName}</h2>" + Environment.NewLine +
-                                                $"<a href=\"{callbackUrl}\"> Por favor confirme su cuenta haciendo click aqui. </a>");
+                                            //estado = "Enviando eMail de Confirmacion";
+                                            //var token = await _userManager.GenerateEmailConfirmationTokenAsync(appuser);
+                                            //var callbackUrl = new Uri(Url.Link("ConfirmEmailRoute", new { userId = appuser.Id, token = token }));
+                                            //Sender mailKit = new Sender(_From_SmtpServer, _From_SmtpServerPort, true, _From_Name, _From_EmailAdress, _From_EmailPassword);
+                                            //mailKit.Send(appuser.UserName, appuser.Email, "Confirma tu Cuenta",
+                                            //    $"<h2>{appuser.UserName}</h2>" + Environment.NewLine +
+                                            //    $"<a href=\"{callbackUrl}\"> Por favor confirme su cuenta haciendo click aqui. </a>");
                                         }
 
                                         _EasyParkingAuthContext.Database.CommitTransaction();
@@ -475,41 +476,6 @@ namespace EasyParkingAPI.Controllers
             }
         }
 
-        [HttpPost("[action]/{UserName}")]
-        public async Task<ActionResult> ResetPassword(string UserName)
-        {
-            if (ModelState.IsValid)
-            {
-                ApplicationUser user = null;
-                user = _userManager.FindByNameAsync(UserName).Result;
-                if (!(user == null))
-                {
-                    PasswordOptions passwordOptions = new PasswordOptions();
-                    string newpassword = GenerateRandomPassword();
-                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                    var callbackUrl = new Uri(Url.Link("ConfirmPasswordResetRoute", new { userId = user.Id, token = token, newpassword = newpassword }));
-
-
-                    //Sender mailKit = new Sender(_From_SmtpServer, _From_SmtpServerPort, _From_Name, _From_EmailAdress, _From_EmailPassword);
-                    Sender mailKit = new Sender(_From_SmtpServer, _From_SmtpServerPort, true, _From_Name, _From_EmailAdress, _From_EmailPassword);
-
-                    mailKit.Send(user.UserName, user.Email, "Cambio de Contraseña",
-                        $"<p> Esta es su nueva contraseña: </p><h2>" + newpassword + "</h2>" + Environment.NewLine +
-                        "<a href=\"" + callbackUrl + "\"> Por favor confirme el cambio haciendo click aqui. </a>");
-                    return Ok();
-                }
-                else
-                {
-                    return BadRequest("Username invalid");
-                }
-            }
-            else
-            {
-                return BadRequest(ModelState);
-            }
-
-        }
-
         [HttpGet]
         [AllowAnonymous]
         [Route("[action]", Name = "ConfirmPasswordResetRoute")]
@@ -535,58 +501,6 @@ namespace EasyParkingAPI.Controllers
         /// <param name="opts">A valid PasswordOptions object
         /// containing the password strength requirements.</param>
         /// <returns>A random password</returns>
-        private string GenerateRandomPassword(PasswordOptions opts = null)
-        {
-            if (opts == null) opts = new PasswordOptions()
-            {
-                RequiredLength = _identityOptions.Value.Password.RequiredLength,
-                RequiredUniqueChars = _identityOptions.Value.Password.RequiredUniqueChars,
-                RequireDigit = _identityOptions.Value.Password.RequireDigit,
-                RequireLowercase = _identityOptions.Value.Password.RequireLowercase,
-                RequireNonAlphanumeric = _identityOptions.Value.Password.RequireNonAlphanumeric,
-                RequireUppercase = _identityOptions.Value.Password.RequireUppercase
-            };
-
-            string[] randomChars = new[]
-            {
-                "ABCDEFGHJKLMNOPQRSTUVWXYZ",    // uppercase 
-                "abcdefghijkmnopqrstuvwxyz",    // lowercase
-                "0123456789",                   // digits
-                "!@$?_-"                        // non-alphanumeric
-            };
-
-            Random rand = new Random(Environment.TickCount);
-            List<char> chars = new List<char>();
-
-            if (opts.RequireUppercase)
-                chars.Insert(rand.Next(0, chars.Count),
-                    randomChars[0][rand.Next(0, randomChars[0].Length)]);
-
-            if (opts.RequireLowercase)
-                chars.Insert(rand.Next(0, chars.Count),
-                    randomChars[1][rand.Next(0, randomChars[1].Length)]);
-
-            if (opts.RequireDigit)
-                chars.Insert(rand.Next(0, chars.Count),
-                    randomChars[2][rand.Next(0, randomChars[2].Length)]);
-
-            if (opts.RequireNonAlphanumeric)
-                chars.Insert(rand.Next(0, chars.Count),
-                    randomChars[3][rand.Next(0, randomChars[3].Length)]);
-
-            for (int i = chars.Count; i < opts.RequiredLength
-                || chars.Distinct().Count() < opts.RequiredUniqueChars; i++)
-            {
-                string rcs = randomChars[rand.Next(0, randomChars.Length)];
-                chars.Insert(rand.Next(0, chars.Count),
-                    rcs[rand.Next(0, rcs.Length)]);
-            }
-
-            return new string(chars.ToArray());
-        }
-
- 
-
 
         [HttpGet("[action]/{username}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "AppUser")]
@@ -634,10 +548,7 @@ namespace EasyParkingAPI.Controllers
             }
         }
 
-
-
         [HttpGet("[action]/{username}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult<UserInfo>> GetUserInfo(string username)
         {
             try
@@ -675,5 +586,401 @@ namespace EasyParkingAPI.Controllers
             }
         }
 
+
+        // ============================================
+        // 1. MÉTODO EN EL CONTROLLER (AccountController.cs)
+        // ============================================
+
+        [HttpPost]
+        [Route("[action]")]
+        [AllowAnonymous]
+        public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request?.Email))
+                {
+                    return BadRequest("Debe proporcionar un email válido");
+                }
+
+                // Buscar usuario por email
+                ApplicationUser user = await _userManager.FindByEmailAsync(request.Email);
+
+                if (user == null)
+                {
+                    // Por seguridad, siempre devolvemos éxito aunque el usuario no exista
+                    return Ok("Si el email está registrado, recibirá un correo con la nueva contraseña");
+                }
+
+                // Generar nueva contraseña aleatoria
+                string newPassword = GenerateRandomPassword();
+
+                var strategy = _EasyParkingAuthContext.Database.CreateExecutionStrategy();
+                try
+                {
+                    var result = await strategy.ExecuteAsync<ActionResult>(async () =>
+                    {
+                        using (var transaction = _EasyParkingAuthContext.Database.BeginTransaction())
+                        {
+                            try
+                            {
+                                // Generar token de reseteo
+                                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                                // Cambiar la contraseña directamente
+                                var resetResult = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+                                if (!resetResult.Succeeded)
+                                {
+                                    return BadRequest("Error al generar la nueva contraseña");
+                                }
+
+                                // Enviar email con la nueva contraseña
+                                bool emailSent = await SendPasswordResetEmail(user.Email, user.Nombre ?? user.UserName, newPassword);
+
+                                if (!emailSent)
+                                {
+                                    // Aunque el email falle, la contraseña ya fue cambiada
+                                    return Ok("Contraseña actualizada pero hubo un error al enviar el email. Contacte al administrador.");
+                                }
+
+                                _EasyParkingAuthContext.Database.CommitTransaction();
+                                return Ok("Se ha enviado un correo con su nueva contraseña");
+                            }
+                            catch (Exception ex)
+                            {
+                                _EasyParkingAuthContext.Database.RollbackTransaction();
+                                return BadRequest("ERROR ... " + ex.Message + (ex.InnerException?.Message ?? ""));
+                            }
+                        }
+                    });
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    _EasyParkingAuthContext.Database.RollbackTransaction();
+                    return BadRequest("ERROR ... " + ex.Message);
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                _EasyParkingAuthContext.Database.RollbackTransaction();
+                return BadRequest($"Error al procesar la solicitud: {ex.Message}");
+            }
+        }
+
+        // ============================================
+        // 2. MÉTODO PARA ENVIAR EMAIL (en AccountController.cs)
+        // ============================================
+
+        private async Task<bool> SendPasswordResetEmail(string toEmail, string userName, string newPassword)
+        {
+            try
+            {
+                using (var smtpClient = new System.Net.Mail.SmtpClient(_From_SmtpServer))
+                {
+                    // Configuración correcta para Gmail
+                    smtpClient.Port = 587; // Puerto TLS
+                    smtpClient.EnableSsl = true;
+                    smtpClient.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
+                    smtpClient.UseDefaultCredentials = false;
+                    smtpClient.Credentials = new System.Net.NetworkCredential(_From_EmailAdress, _From_EmailPassword);
+                    smtpClient.Timeout = 20000; // 20 segundos
+
+                    var mailMessage = new System.Net.Mail.MailMessage
+                    {
+                        From = new System.Net.Mail.MailAddress(_From_EmailAdress, _From_Name),
+                        Subject = "Recuperación de Contraseña - EasyParking",
+                        Body = GenerateEmailBody(userName, newPassword),
+                        IsBodyHtml = true,
+                        Priority = System.Net.Mail.MailPriority.High
+                    };
+
+                    mailMessage.To.Add(toEmail);
+
+                    await smtpClient.SendMailAsync(mailMessage);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al enviar email: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                return false;
+            }
+        }        // ============================================
+        // 3. PLANTILLA HTML DEL EMAIL (en AccountController.cs)
+        // ============================================
+
+        private string GenerateEmailBody(string userName, string newPassword)
+        {
+            return $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }}
+                .content {{ background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; }}
+                .password-box {{ background-color: #fff; border: 2px solid #4CAF50; padding: 20px; margin: 20px 0; text-align: center; border-radius: 5px; }}
+                .password {{ font-size: 24px; font-weight: bold; color: #4CAF50; letter-spacing: 2px; }}
+                .footer {{ background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 5px 5px; }}
+                .warning {{ background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>🅿️ EasyParking</h1>
+                    <p>Recuperación de Contraseña</p>
+                </div>
+                <div class='content'>
+                    <h2>Hola, {userName}</h2>
+                    <p>Has solicitado restablecer tu contraseña. Tu nueva contraseña temporal es:</p>
+                    
+                    <div class='password-box'>
+                        <div class='password'>{newPassword}</div>
+                    </div>
+
+                    <div class='warning'>
+                        <strong>⚠️ Importante:</strong>
+                        <ul style='margin: 10px 0; padding-left: 20px;'>
+                            <li>Esta es tu nueva contraseña temporal</li>
+                            <li>Te recomendamos cambiarla después de iniciar sesión</li>
+                            <li>No compartas esta contraseña con nadie</li>
+                        </ul>
+                    </div>
+
+                    <p>Si no solicitaste este cambio, contacta inmediatamente con nuestro equipo de soporte.</p>
+                </div>
+                <div class='footer'>
+                    <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+                    <p>&copy; 2025 EasyParking. Todos los derechos reservados.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    ";
+        }
+
+        // ============================================
+        // 5. ACTUALIZACIÓN DEL MÉTODO GenerateRandomPassword
+        // ============================================
+
+        private string GenerateRandomPassword(PasswordOptions opts = null)
+        {
+            if (opts == null) opts = new PasswordOptions()
+            {
+                RequiredLength = _identityOptions.Value.Password.RequiredLength,
+                RequiredUniqueChars = _identityOptions.Value.Password.RequiredUniqueChars,
+                RequireDigit = _identityOptions.Value.Password.RequireDigit,
+                RequireLowercase = _identityOptions.Value.Password.RequireLowercase,
+                RequireNonAlphanumeric = _identityOptions.Value.Password.RequireNonAlphanumeric,
+                RequireUppercase = _identityOptions.Value.Password.RequireUppercase
+            };
+
+            //        string[] randomChars = new[]
+            //        {
+            //    "ABCDEFGHJKLMNOPQRSTUVWXYZ",    // uppercase 
+            //    "abcdefghijkmnopqrstuvwxyz",    // lowercase
+            //    "0123456789",                   // digits
+            //    "!@$?_-"                        // non-alphanumeric
+            //};
+
+
+            string[] randomChars = new[]
+            {
+                    //"ABCDEFGHJKLMNOPQRSTUVWXYZ",    // uppercase 
+                    "abcdefghijkmnopqrstuvwxyz",    // lowercase
+                    "0123456789"                   // digits
+            };
+
+            Random rand = new Random(Environment.TickCount);
+            List<char> chars = new List<char>();
+
+            if (opts.RequireUppercase)
+                chars.Insert(rand.Next(0, chars.Count),
+                    randomChars[0][rand.Next(0, randomChars[0].Length)]);
+
+            if (opts.RequireLowercase)
+                chars.Insert(rand.Next(0, chars.Count),
+                    randomChars[1][rand.Next(0, randomChars[1].Length)]);
+
+            if (opts.RequireDigit)
+                chars.Insert(rand.Next(0, chars.Count),
+                    randomChars[2][rand.Next(0, randomChars[2].Length)]);
+
+            if (opts.RequireNonAlphanumeric)
+                chars.Insert(rand.Next(0, chars.Count),
+                    randomChars[3][rand.Next(0, randomChars[3].Length)]);
+
+            for (int i = chars.Count; i < opts.RequiredLength
+                || chars.Distinct().Count() < opts.RequiredUniqueChars; i++)
+            {
+                string rcs = randomChars[rand.Next(0, randomChars.Length)];
+                chars.Insert(rand.Next(0, chars.Count),
+                    rcs[rand.Next(0, rcs.Length)]);
+            }
+
+            return new string(chars.ToArray());
+        }
+
+
+        // ============================================
+        // 1 MÉTODO PARA CAMBIAR CONTRASEÑA DEL USUARIO AUTENTICADO
+        // ============================================
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<ActionResult> ChangeUserPassword([FromBody] ChangePasswordRequest request)
+        {
+            try
+            {
+                // Validar que vengan los datos necesarios
+                if (string.IsNullOrWhiteSpace(request?.CurrentPassword) ||
+                    string.IsNullOrWhiteSpace(request?.NewPassword))
+                {
+                    return BadRequest("Debe proporcionar la contraseña actual y la nueva contraseña");
+                }
+
+                // Obtener el usuario autenticado desde el token
+                var userIdentity = _httpContextAccessor.HttpContext.User;
+                ApplicationUser user = await _userManager.FindByNameAsync(userIdentity.Identity.Name);
+
+                if (user == null)
+                {
+                    return NotFound("Usuario no encontrado");
+                }
+
+                // Verificar que la contraseña actual sea correcta
+                var passwordCheck = await _signInManager.CheckPasswordSignInAsync(user, request.CurrentPassword, false);
+
+                if (!passwordCheck.Succeeded)
+                {
+                    return BadRequest("La contraseña actual es incorrecta");
+                }
+
+                // Validar que la nueva contraseña no sea igual a la actual
+                if (request.CurrentPassword == request.NewPassword)
+                {
+                    return BadRequest("La nueva contraseña debe ser diferente a la actual");
+                }
+
+                // Cambiar la contraseña
+                var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+
+                if (!result.Succeeded)
+                {
+                    // Retornar los errores específicos de validación de contraseña
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    return BadRequest($"Error al cambiar la contraseña: {errors}");
+                }
+
+                // Opcional: Enviar email de notificación
+                try
+                {
+                    await SendPasswordChangedNotification(user.Email, user.Nombre ?? user.UserName);
+                }
+                catch (Exception emailEx)
+                {
+                    // Si falla el email, no afecta el cambio de contraseña
+                    Console.WriteLine($"Error al enviar notificación: {emailEx.Message}");
+                }
+
+                return Ok("Contraseña cambiada exitosamente");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al cambiar la contraseña: {Tools.Tools.ExceptionMessage(ex)}");
+            }
+        }
+
+        // ============================================
+        // 2 MÉTODO AUXILIAR PARA ENVIAR NOTIFICACIÓN
+        // ============================================
+
+        private async Task<bool> SendPasswordChangedNotification(string toEmail, string userName)
+        {
+            try
+            {
+                using (var smtpClient = new System.Net.Mail.SmtpClient(_From_SmtpServer))
+                {
+                    smtpClient.Port = 587;
+                    smtpClient.EnableSsl = true;
+                    smtpClient.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
+                    smtpClient.UseDefaultCredentials = false;
+                    smtpClient.Credentials = new System.Net.NetworkCredential(_From_EmailAdress, _From_EmailPassword);
+                    smtpClient.Timeout = 20000;
+
+                    var mailMessage = new System.Net.Mail.MailMessage
+                    {
+                        From = new System.Net.Mail.MailAddress(_From_EmailAdress, _From_Name),
+                        Subject = "Contraseña Actualizada - EasyParking",
+                        Body = GeneratePasswordChangedEmailBody(userName),
+                        IsBodyHtml = true,
+                        Priority = System.Net.Mail.MailPriority.Normal
+                    };
+
+                    mailMessage.To.Add(toEmail);
+
+                    await smtpClient.SendMailAsync(mailMessage);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al enviar email: {ex.Message}");
+                return false;
+            }
+        }
+
+        private string GeneratePasswordChangedEmailBody(string userName)
+        {
+            return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #4CAF50; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }}
+        .content {{ background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; }}
+        .info-box {{ background-color: #e8f5e9; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0; }}
+        .warning {{ background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }}
+        .footer {{ background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 5px 5px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>🅿️ EasyParking</h1>
+            <p>Notificación de Seguridad</p>
+        </div>
+        <div class='content'>
+            <h2>Hola, {userName}</h2>
+            
+            <div class='info-box'>
+                <strong>✓ Contraseña Actualizada</strong>
+                <p style='margin: 10px 0 0 0;'>Tu contraseña ha sido cambiada exitosamente el {DateTime.Now:dd/MM/yyyy} a las {DateTime.Now:HH:mm}.</p>
+            </div>
+
+            <div class='warning'>
+                <strong>⚠️ ¿No fuiste tú?</strong>
+                <p style='margin: 10px 0 0 0;'>Si no realizaste este cambio, contacta inmediatamente con nuestro equipo de soporte para proteger tu cuenta.</p>
+            </div>
+
+            <p>Gracias por usar EasyParking.</p>
+        </div>
+        <div class='footer'>
+            <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+            <p>&copy; 2025 EasyParking. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>";
+        }
     }
 }

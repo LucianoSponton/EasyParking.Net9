@@ -16,7 +16,7 @@ namespace Test
     {
         // **** Con esto se usa la api de arriba o la local *** ///
         static string Uri = "http://localhost:5000";
-       //static string Uri = "http://40.118.242.96:12595";
+       // static string Uri = "http://40.118.242.96:12595";
         static HttpClient httpClient { get; set; } = new HttpClient();
 
         static void Main(string[] args)
@@ -74,8 +74,12 @@ namespace Test
                 //var x = GetAllMisVehiculos().Result;
                 //var x = Busqueda("casa").Result;
                 //var x = Busqueda().Result;
-                CrearUsuaio().Wait();
+                //CrearUsuaio().Wait();
                 // GetReseñas().Wait();
+
+                //Login(Uri,"lucho2798@gmail.com", "0zt82r2s").Wait();
+                //ResetPassword("lucho2798@gmail.com").Wait();
+                ChangePassword("lucho2798@gmail.com").Wait();
 
                 //var x = GetAllInclude().Result;
                 //var x = GetVehiculoByPatente("AA658V").Result;
@@ -302,6 +306,92 @@ namespace Test
             }
         }
 
+        //static async Task ResetPassword(string username)
+        //{
+        //    try
+        //    {
+        //        //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+        //        var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "lucho2798@gmail.com", "luciano123", 3, 180);
+
+        //        AccountServiceWebApi accountServiceWebApi = new AccountServiceWebApi(webapiaccess);
+        //        await accountServiceWebApi.ResetPassword(username);
+
+        //        Console.WriteLine("Add ResetPassword2 Ok");
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(ex.Message);
+
+        //        throw ex;
+        //    }
+
+        //}
+
+
+        static async Task ChangePassword(string email)
+        {
+            try
+            {
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "lucho2798@gmail.com", "g9d7depp", 3, 180);
+
+                AccountServiceWebApi accountServiceWebApi = new AccountServiceWebApi(webapiaccess);
+                await accountServiceWebApi.ChangeUserPassword("g9d7depp", "hola1234", "hola1234");
+
+                Console.WriteLine("ResetPassword Ok");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                throw ex;
+            }
+
+        }
+
+        static async Task ResetPassword(string email)
+        {
+            try
+            {
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "lucho2798@gmail.com", "luciano123", 3, 180);
+
+                AccountServiceWebApi accountServiceWebApi = new AccountServiceWebApi(Uri);
+                await accountServiceWebApi.ResetPassword(email);
+
+                Console.WriteLine("ResetPassword Ok");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                throw ex;
+            }
+
+        }
+
+        static async Task Login(string Uri, string user, string pass)
+        {
+            try
+            {
+                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, user, pass, 3, 60);
+
+                Console.WriteLine($"Token {webapiaccess.Token}");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                throw ex;
+            }
+
+        }
+
+
 
         static async Task PruebaLogin()
         {
@@ -366,7 +456,7 @@ namespace Test
             try
             {
                 Console.WriteLine("GetAccess");
-               // var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 180);
+                // var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 180);
                 var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
                 EstacionamientoServiceWebApi estacionamientoServiceWebApi = new EstacionamientoServiceWebApi(webapiaccess);
                 Console.WriteLine("Consultando");
@@ -793,7 +883,7 @@ namespace Test
                 Console.WriteLine("GetAccess");
 
                 var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
-               // var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 180);
+                // var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 180);
                 VehiculoServiceWebApi vehiculoServiceWebApi = new VehiculoServiceWebApi(webapiaccess);
                 Console.WriteLine("Consultando");
                 var x = await vehiculoServiceWebApi.GetVehiculoByPatente(patente);
@@ -862,7 +952,7 @@ namespace Test
         {
             try
             {
-               // var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+                // var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
                 //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "analia@hotmail.com", "analia123", 3, 60);
                 var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
 
@@ -896,7 +986,7 @@ namespace Test
             {
                 Console.WriteLine("GetAccess");
                 //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "cristiano@hotmail.com", "cristiano123", 3, 3 * 60);
-               /// var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+                /// var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
                 var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
                 //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "analia@hotmail.com", "analia123", 3, 60);
                 ReservaServiceWebApi reservaServiceWebApi = new ReservaServiceWebApi(webapiaccess);
@@ -932,7 +1022,7 @@ namespace Test
             }
         }
 
-      
+
         static async Task Agregar()
         {
             try

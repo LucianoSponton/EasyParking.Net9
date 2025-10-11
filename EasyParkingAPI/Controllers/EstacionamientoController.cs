@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Model;
 using ServiceWebApi.DTO;
@@ -16,7 +15,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace EasyParkingAPI.Controllers
 {
@@ -90,7 +88,7 @@ namespace EasyParkingAPI.Controllers
 
                 ///var vehiculo = await dataContext.Vehiculos.Where(x => x.UserId == _UserId && x.Patente == "AA658V").AsNoTracking().FirstOrDefaultAsync();
 
-               // var estacionamientos = await dataContext.Estacionamientos.ToListAsync();
+                // var estacionamientos = await dataContext.Estacionamientos.ToListAsync();
 
                 if (estacionamientos == null)
                 {
@@ -138,7 +136,7 @@ namespace EasyParkingAPI.Controllers
                 DataContext dataContext = new DataContext();
                 var lista = await dataContext.Estacionamientos.Include("Jornadas.Horarios")
                 .Include("TiposDeVehiculosAdmitidos").Where(x => x.UserId == _UserId && x.Inactivo == false).AsNoTracking().ToListAsync(); // Retorna los estacionamientos de la persona logeada
-               
+
                 if (lista == null)
                 {
                     return NotFound();
@@ -792,7 +790,7 @@ namespace EasyParkingAPI.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult<List<Estacionamiento>>> GetConsultaGenericaAsync([FromBody] ServiceWebApi.DTO.ParametroBusquedaDTO parametroBusquedaDTO)
         {
-                                return NotFound();
+            return NotFound();
 
             //try
             //{

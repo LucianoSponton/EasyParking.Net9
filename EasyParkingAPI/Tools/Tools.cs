@@ -11,7 +11,8 @@ namespace EasyParkingAPI.Tools
             {
                 e = e.InnerException;
                 message = message + " -*- " + e.Message;
-            };
+            }
+            ;
 
 
             return message;
