@@ -528,7 +528,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> AddAsync([FromBody] EstacionamientoDTO estacionamientoDTO)
         {
             try
@@ -585,7 +584,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> SetActivoAsync([FromBody] int estacionamientoId)
         {
             try
@@ -606,7 +604,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> SetInactivoAsync([FromBody] int estacionamientoId)
         {
             try
@@ -627,7 +624,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> SetPublicacionPausadaAsync([FromBody] int estacionamientoId)
         {
             try
@@ -648,7 +644,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> SetReanudarPublicacionAsync([FromBody] int estacionamientoId)
         {
             try
@@ -670,7 +665,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> UpdateAsync([FromBody] EstacionamientoDTO estacionamientoDTO)
         {
             try
@@ -733,7 +727,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> UploadsAsync([FromForm] IFormFile file)
         {
             try
@@ -787,7 +780,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult<List<Estacionamiento>>> GetConsultaGenericaAsync([FromBody] ServiceWebApi.DTO.ParametroBusquedaDTO parametroBusquedaDTO)
         {
             return NotFound();
@@ -934,7 +926,6 @@ namespace EasyParkingAPI.Controllers
         /////////////////////////// DELETE ///////////////////////////
 
         [HttpDelete("[action]/{estacionamientoId}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> DeleteAsync(int estacionamientoId)
         {
             try

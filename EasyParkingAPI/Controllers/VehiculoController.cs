@@ -146,7 +146,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> AddAsync([FromBody] Vehiculo vehiculo)
         {
             try
@@ -165,7 +164,6 @@ namespace EasyParkingAPI.Controllers
 
 
         [HttpDelete("[action]/{vehiculoId}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> DeleteAsync(int vehiculoId)
         {
             try

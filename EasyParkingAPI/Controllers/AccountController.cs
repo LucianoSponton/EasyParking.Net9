@@ -180,7 +180,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> UpdateUserAsync([FromBody] UserInfo userinfo)
         {
             try
@@ -229,7 +228,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpPost]
         [Route("[action]")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         public async Task<ActionResult> CreateRole([FromBody] RoleInfo model)
         {
             if (ModelState.IsValid)
@@ -278,7 +276,6 @@ namespace EasyParkingAPI.Controllers
         //}
 
         [HttpGet("[action]/{username},{currentPassword},{newPassword}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> ChangePassword(string username, string currentPassword, string newPassword)
         {
             try
@@ -310,7 +307,6 @@ namespace EasyParkingAPI.Controllers
         }
 
         [HttpGet("[action]/{username}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> UserLock(string username)
         {
             try
@@ -345,7 +341,6 @@ namespace EasyParkingAPI.Controllers
         }
 
         [HttpGet("[action]/{username}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin, AppUser")]
         public async Task<ActionResult> UserUnLock(string username)
         {
             try
@@ -478,7 +473,6 @@ namespace EasyParkingAPI.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        [Route("[action]", Name = "ConfirmPasswordResetRoute")]
         public IActionResult ConfirmPasswordReset(string userid, string token, string newpassword)
         {
 
@@ -503,7 +497,6 @@ namespace EasyParkingAPI.Controllers
         /// <returns>A random password</returns>
 
         [HttpGet("[action]/{username}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "AppUser")]
         public async Task<ActionResult> UserLockItSelf(string username)
         {
             try
