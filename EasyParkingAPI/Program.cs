@@ -1,4 +1,4 @@
-using EasyParking.API;
+Ôªøusing EasyParking.API;
 using EasyParkingAPI.Data;
 using EasyParkingAPI.Model;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,8 +18,12 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 
+// ‚úÖ Aqu√≠ pod√©s registrar servicios:
+builder.Services.AddDbContext<DataContext>();
+builder.Services.AddHostedService<ReservaExpirationService>(); // üëà Aqu√≠ s√≠ va
+
 // ======================================================
-// ?? Leer configuraciÛn
+// ?? Leer configuraci√≥n
 // ======================================================
 var config = builder.Configuration;
 string connectionString = config.GetValue<string>("ConnectionString");
@@ -41,7 +45,7 @@ builder.Services.AddDbContextPool<EasyParkingAuthContext>(options =>
 );
 
 // ======================================================
-// ?? Identity con Token Providers (SOLUCI”N AL ERROR)
+// ?? Identity con Token Providers (SOLUCI√ìN AL ERROR)
 // ======================================================
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(config =>
 {
@@ -52,14 +56,14 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(config =>
     config.Password.RequireNonAlphanumeric = false;
     config.Password.RequiredLength = 8;
 
-    // ConfiguraciÛn de tokens para reseteo de contraseÒa y confirmaciÛn de email
+    // Configuraci√≥n de tokens para reseteo de contrase√±a y confirmaci√≥n de email
     config.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultProvider;
     config.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultProvider;
 })
 .AddEntityFrameworkStores<EasyParkingAuthContext>()
-.AddDefaultTokenProviders(); // ? LÕNEA CRÕTICA AGREGADA
+.AddDefaultTokenProviders(); // ? L√çNEA CR√çTICA AGREGADA
 
-// ConfiguraciÛn del tiempo de vida de los tokens (opcional pero recomendado)
+// Configuraci√≥n del tiempo de vida de los tokens (opcional pero recomendado)
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromHours(3); // Los tokens expiran en 3 horas
@@ -120,7 +124,7 @@ builder.Services.AddCors(options =>
 });
 
 // ======================================================
-// ?? AutenticaciÛn JWT
+// ?? Autenticaci√≥n JWT
 // ======================================================
 string? key = config.GetValue<string>("Security:SymmetricSecurityKey");
 
@@ -156,7 +160,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 
-    // EjecuciÛn de lÛgica solo en desarrollo
+    // Ejecuci√≥n de l√≥gica solo en desarrollo
     bool CreatingUsersAndRoles = false;
     if (CreatingUsersAndRoles)
     {
@@ -170,7 +174,7 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-// Habilitar archivos est·ticos para Estacionamientos
+// Habilitar archivos est√°ticos para Estacionamientos
 var estacionamientosFolder = builder.Configuration.GetValue<string>("EasyParkingAPI:Images:Estacionamientos_Folder");
 
 if (!string.IsNullOrEmpty(estacionamientosFolder) && Directory.Exists(estacionamientosFolder))
@@ -182,7 +186,7 @@ if (!string.IsNullOrEmpty(estacionamientosFolder) && Directory.Exists(estacionam
     });
 }
 
-// Habilitar archivos est·ticos para Usuarios
+// Habilitar archivos est√°ticos para Usuarios
 var usuariosFolder = builder.Configuration.GetValue<string>("EasyParkingAPI:Images:Usuarios_Folder");
 
 if (!string.IsNullOrEmpty(usuariosFolder) && Directory.Exists(usuariosFolder))
@@ -193,6 +197,8 @@ if (!string.IsNullOrEmpty(usuariosFolder) && Directory.Exists(usuariosFolder))
         RequestPath = "/images/usuarios"
     });
 }
+
+
 
 app.UseHttpsRedirection();
 app.UseCors("CorsPolicy");

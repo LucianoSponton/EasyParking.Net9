@@ -691,6 +691,20 @@ namespace EasyParkingAPI.Controllers
                     dataContext.DataVehiculoAlojados.Remove(item);
                 }
 
+                // Manejo de Tipos de Vehículos
+                var lista_Jornadas = dataContext.Jornadas
+                    .Where(x => x.EstacionamientoId == estacionamiento.Id);
+
+                foreach (var item in lista_Jornadas)
+                {
+                    dataContext.Jornadas.Remove(item);
+                }
+
+                foreach (var item in lista_TipoVehiculosAlojados)
+                {
+                    dataContext.DataVehiculoAlojados.Remove(item);
+                }
+
                 // Guardar/Actualizar imagen
                 string fileName = null;
                 if (estacionamientoDTO.ImageBytes != null && estacionamientoDTO.ImageBytes.Length > 0)
