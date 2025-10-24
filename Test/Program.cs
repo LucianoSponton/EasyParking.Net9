@@ -932,7 +932,7 @@ namespace Test
 
                 Vehiculo vehiculo = new Vehiculo();
                 vehiculo.Patente = "FR98YH";
-                vehiculo.TipoDeVehiculo = "Auto";
+                vehiculo.TipoDeVehiculo = TipoDeVehiculo.AUTO;
 
                 await vehiculoServiceWebApi.Add(vehiculo);
 
@@ -950,33 +950,33 @@ namespace Test
 
         static async Task AddReserva()
         {
-            try
-            {
-                // var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
-                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "analia@hotmail.com", "analia123", 3, 60);
-                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
+            //try
+            //{
+            //    // var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+            //    //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "analia@hotmail.com", "analia123", 3, 60);
+            //    var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
 
-                ReservaServiceWebApi reservaServiceWebApi = new ReservaServiceWebApi(webapiaccess);
+            //    ReservaServiceWebApi reservaServiceWebApi = new ReservaServiceWebApi(webapiaccess);
 
-                Model.Reserva reserva = new Model.Reserva();
-                reserva.CodigoDeValidacion = "DFERTYGH";
-                reserva.EstacionamientoId = 30;
-                reserva.Monto = 321;
-                reserva.Patente = "AS345SQ";
-                reserva.VehiculoId = 28;
-                reserva.Estado = Model.Enums.EstadoReserva.ESPERANDO_ARRIBO;
+            //    Model.Reserva reserva = new Model.Reserva();
+            //    reserva.CodigoDeValidacion = "DFERTYGH";
+            //    reserva.EstacionamientoId = 30;
+            //    reserva.Monto = 321;
+            //    reserva.Patente = "AS345SQ";
+            //    reserva.VehiculoId = 28;
+            //    reserva.Estado = Model.Enums.EstadoReserva.ESPERANDO_ARRIBO;
 
-                await reservaServiceWebApi.Add(reserva);
+            //    await reservaServiceWebApi.Add(reserva);
 
-                Console.WriteLine("Add Reserva Ok");
+            //    Console.WriteLine("Add Reserva Ok");
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine(ex.Message);
 
-                throw ex;
-            }
+            //    throw ex;
+            //}
 
         }
 
@@ -1122,7 +1122,7 @@ namespace Test
                 //********** TEMA VEHICULOS ACEPTADOS Y SUS TARIFAS **********//
 
                 Model.DataVehiculoAlojado dataVehiculo = new Model.DataVehiculoAlojado();
-                dataVehiculo.TipoDeVehiculo = "Auto";
+                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.AUTO;
                 dataVehiculo.CapacidadDeAlojamiento = numRandom.Next(1, 6);
                 dataVehiculo.Tarifa_Hora = numRandom.Next(50, 100);
                 dataVehiculo.Tarifa_Dia = numRandom.Next(100, 200);
@@ -1131,7 +1131,7 @@ namespace Test
 
 
                 Model.DataVehiculoAlojado dataVehiculo1 = new Model.DataVehiculoAlojado();
-                dataVehiculo1.TipoDeVehiculo = "Moto";
+                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.MOTO;
                 dataVehiculo1.CapacidadDeAlojamiento = numRandom.Next(1, 6);
                 dataVehiculo1.Tarifa_Hora = numRandom.Next(50, 100);
                 dataVehiculo1.Tarifa_Dia = numRandom.Next(100, 200);
@@ -1140,7 +1140,7 @@ namespace Test
 
 
                 Model.DataVehiculoAlojado dataVehiculo3 = new Model.DataVehiculoAlojado();
-                dataVehiculo3.TipoDeVehiculo = "Camioneta";
+                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.CAMIONETA;
                 dataVehiculo3.CapacidadDeAlojamiento = numRandom.Next(1, 6);
                 dataVehiculo3.Tarifa_Hora = numRandom.Next(50, 100);
                 dataVehiculo3.Tarifa_Dia = numRandom.Next(100, 200);
@@ -1255,7 +1255,7 @@ namespace Test
                 //********** TEMA VEHICULOS ACEPTADOS Y SUS TARIFAS **********//
 
                 Model.DataVehiculoAlojado dataVehiculo = new Model.DataVehiculoAlojado();
-                dataVehiculo.TipoDeVehiculo = "Auto";
+                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.AUTO;
                 dataVehiculo.CapacidadDeAlojamiento = numRandom.Next(1, 6);
                 dataVehiculo.Tarifa_Hora = numRandom.Next(50, 100);
                 dataVehiculo.Tarifa_Dia = numRandom.Next(100, 200);
@@ -1264,7 +1264,7 @@ namespace Test
 
 
                 Model.DataVehiculoAlojado dataVehiculo1 = new Model.DataVehiculoAlojado();
-                dataVehiculo1.TipoDeVehiculo = "Moto";
+                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.MOTO;
                 dataVehiculo1.CapacidadDeAlojamiento = numRandom.Next(1, 6);
                 dataVehiculo1.Tarifa_Hora = numRandom.Next(50, 100);
                 dataVehiculo1.Tarifa_Dia = numRandom.Next(100, 200);
@@ -1273,7 +1273,7 @@ namespace Test
 
 
                 Model.DataVehiculoAlojado dataVehiculo3 = new Model.DataVehiculoAlojado();
-                dataVehiculo3.TipoDeVehiculo = "Camioneta";
+                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.CAMIONETA;
                 dataVehiculo3.CapacidadDeAlojamiento = numRandom.Next(1, 6);
                 dataVehiculo3.Tarifa_Hora = numRandom.Next(50, 100);
                 dataVehiculo3.Tarifa_Dia = numRandom.Next(100, 200);

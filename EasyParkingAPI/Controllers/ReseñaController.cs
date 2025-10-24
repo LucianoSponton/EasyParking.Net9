@@ -73,7 +73,8 @@ namespace EasyParkingAPI.Controllers
 
                     ApplicationUser appuserCliente = _userManager.FindByIdAsync(reseñaDTO.EmisorId).Result; // Obtengo los datos del usuario logeado
                     reseñaDTO.NombreCliente = appuserCliente.Nombre;
-                    reseñaDTO.URLImagenCliente = "";
+                    var fileName = appuserCliente.Id + ".jpg";
+                    reseñaDTO.URLImagenCliente = $"http://40.118.242.96:12595/images/usuarios/{fileName}";
 
                     listaDTO.Add(reseñaDTO);
                 }

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Model;
+using Model.Enums;
 using ServiceWebApi.DTO;
 using System;
 using System.Collections.Generic;
@@ -300,7 +301,7 @@ namespace EasyParkingAPI.Controllers
 
         [HttpGet]
         [Route("[action]/{vehiculo}")]
-        public async Task<ActionResult<List<Estacionamiento>>> GetByTiposDeVehiculosAdmitidosAsync(string vehiculo) // consulta por nombre o direccion del estacionamiento
+        public async Task<ActionResult<List<Estacionamiento>>> GetByTiposDeVehiculosAdmitidosAsync(TipoDeVehiculo vehiculo) // consulta por nombre o direccion del estacionamiento
         {
             try
             {
@@ -393,7 +394,7 @@ namespace EasyParkingAPI.Controllers
                         e.Nombre.ToLower().Contains(texto) ||
                         e.Direccion.ToLower().Contains(texto) ||
                         e.TipoDeLugar.ToLower().Contains(texto) ||
-                        e.TiposDeVehiculosAdmitidos.Any(v => v.TipoDeVehiculo.ToLower().Contains(texto))
+                        e.TiposDeVehiculosAdmitidos.Any(v => v.TipoDeVehiculo.ToString().ToLower().Contains(texto))
                     )
                     .AsQueryable();
 
@@ -478,7 +479,7 @@ namespace EasyParkingAPI.Controllers
                 {
                     query = query.Where(e =>
                         e.TiposDeVehiculosAdmitidos.Any(v =>
-                            filtros.TipoDeVehiculos.Contains(v.TipoDeVehiculo)));
+                            filtros.TipoDeVehiculos.Contains(v.TipoDeVehiculo.ToString())));
                 }
 
                 // Filtro por ciudad
@@ -705,6 +706,7 @@ namespace EasyParkingAPI.Controllers
                     dataContext.DataVehiculoAlojados.Remove(item);
                 }
 
+ 
                 // Guardar/Actualizar imagen
                 string fileName = null;
                 if (estacionamientoDTO.ImageBytes != null && estacionamientoDTO.ImageBytes.Length > 0)

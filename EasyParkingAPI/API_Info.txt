@@ -1,4 +1,4 @@
-﻿Cuando solamente se realizaron cambios de codigo en la API, ejemplo:
+﻿ n  Cuando solamente se realizaron cambios de codigo en la API, ejemplo:
 - se agrego un nuevo metodo a un Controller, no se hacen los Add ni Update de las migraciones
 (eso es solamente para hacer cambios en la base de datos, 
 por ejemplo si se cambio las propiedades de

@@ -224,7 +224,10 @@ namespace EasyParkingAPI.Controllers
                     reservaDTO.Nombre = appuser.Nombre;
                     reservaDTO.Apellido = appuser.Apellido;
                     reservaDTO.TipoDeVehiculo = dataContext.Vehiculos.Where(x => x.UserId == reservaDTO.UserId).Select(e => e.TipoDeVehiculo).FirstOrDefault();
-
+                   
+                    var fileName = appuser.Id + ".jpg";
+                    reservaDTO.Link_FotoCliente = $"http://40.118.242.96:12595/images/usuarios/{fileName}";
+                  
                     listaDTO.Add(reservaDTO);
                 }
 
@@ -490,6 +493,136 @@ namespace EasyParkingAPI.Controllers
         // MÉTODO AddAsync MEJORADO CON NOTIFICACIÓN POR EMAIL
         // ============================================
 
+        //[HttpPost]
+        //[Route("[action]")]
+        //public async Task<ActionResult> AddAsync([FromBody] Reserva reserva)
+        //{
+        //    try
+        //    {
+        //        DataContext dataContext = new DataContext();
+        //        reserva.UserId = _UserId;
+
+        //        // Contrar unica reserva para determinado vehiculo
+        //        var result = await dataContext.Reservas
+        //            .AnyAsync(x => x.UserId == reserva.UserId && x.Patente == reserva.Patente && (x.Estado == EstadoReserva.ESPERANDO_ARRIBO || x.Estado == EstadoReserva.ARRIBO_EXITOSO));
+
+        //        if (result)
+        //            return BadRequest("ERROR.. Ya tiene una reserva realizada con este vehículo en curso.");
+
+        //        // Validar vehículo
+        //        var vehiculo = await dataContext.Vehiculos
+        //            .Where(x => x.Id == reserva.VehiculoId)
+        //            .FirstOrDefaultAsync();
+
+        //        if (vehiculo == null)
+        //            return BadRequest("ERROR.. No se encontró su vehículo");
+
+        //        // Validar datos de alojamiento
+        //        var datoVehiculoSobreAlojado = await dataContext.DataVehiculoAlojados
+        //            .Where(x => x.EstacionamientoId == reserva.EstacionamientoId &&
+        //                        x.TipoDeVehiculo == vehiculo.TipoDeVehiculo)
+        //            .FirstOrDefaultAsync();
+
+        //        if (datoVehiculoSobreAlojado == null)
+        //            return BadRequest($"ERROR.. El tipo de su vehículo ({vehiculo.TipoDeVehiculo}) no puede ser alojado en este lugar, ya que no es admitido");
+
+        //        // Validar capacidad
+        //        //if (datoVehiculoSobreAlojado.CapacidadDeAlojamiento > datoVehiculoSobreAlojado.CantidadActualAlojados)
+        //        //{
+        //        //    datoVehiculoSobreAlojado.CantidadActualAlojados++;
+        //        //}
+        //        //else
+        //        //{
+        //        //    return BadRequest("ERROR.. No hay más cupos disponibles para este vehículo");
+        //        //}
+
+        //        // Obtener datos del estacionamiento
+        //        var estacionamiento = await dataContext.Estacionamientos
+        //            .Where(x => x.Id == reserva.EstacionamientoId)
+        //            .FirstOrDefaultAsync();
+
+        //        if (estacionamiento == null)
+        //            return BadRequest("ERROR.. No se encontró el estacionamiento");
+
+        //        // Obtener datos del propietario del estacionamiento
+        //        var propietario = await _userManager.FindByIdAsync(estacionamiento.UserId);
+
+        //        if (propietario == null || string.IsNullOrEmpty(propietario.Email))
+        //        {
+        //            // Log del error pero continúa con la reserva
+        //            Console.WriteLine("Advertencia: No se pudo obtener el email del propietario");
+        //        }
+
+        //        // Obtener datos del cliente (usuario que hace la reserva)
+        //        var cliente = await _userManager.FindByIdAsync(reserva.UserId);
+
+        //        if (cliente == null)
+        //            return BadRequest("ERROR.. No se encontraron los datos del cliente");
+
+        //        // Guardar cambios en la base de datos
+        //        dataContext.DataVehiculoAlojados.Update(datoVehiculoSobreAlojado);
+        //        await dataContext.Reservas.AddAsync(reserva);
+        //        await dataContext.SaveChangesAsync();
+
+        //        // Preparar y enviar notificación por email al propietario
+        //        if (propietario != null && !string.IsNullOrEmpty(propietario.Email))
+        //        {
+        //            try
+        //            {
+        //                DateTime fechaCreacionMastiempoDeEspera = reserva.FechaDeCreacion;
+
+        //                var notificacion = new ReservationNotificationDTO
+        //                {
+        //                    // Datos del cliente
+        //                    NombreCliente = cliente.Nombre ?? "Cliente",
+        //                    ApellidoCliente = cliente.Apellido ?? "",
+        //                    TipoDeVehiculoCliente = vehiculo.TipoDeVehiculo,
+        //                    PatenteCliente = vehiculo.Patente,
+
+        //                    // Datos del estacionamiento
+        //                    NombreDelEstacionamiento = estacionamiento.Nombre,
+        //                    DireccionDelEstacionamiento = estacionamiento.Direccion ?? "No especificada",
+        //                    TipoDeLugarDelEstacionamiento = estacionamiento.TipoDeLugar,
+        //                    MontoDeLaReserva = reserva.Monto,
+
+        //                    // Datos adicionales
+        //                    EmailPropietario = propietario.Email,
+        //                    FechaHoraReserva = DateTime.Now,
+        //                    FechaHoraExpiracion = fechaCreacionMastiempoDeEspera.AddMinutes(estacionamiento.TiempoDeEsperaEnMinutos),
+        //                    NumeroReserva = reserva.Id.ToString()
+        //                };
+
+        //                bool emailEnviado = await SendReservationEmail(notificacion);
+
+        //                if (!emailEnviado)
+        //                {
+        //                    Console.WriteLine($"Advertencia: Reserva creada pero no se pudo enviar email de notificación. ReservaId: {reserva.Id}");
+        //                }
+        //                else
+        //                {
+        //                    Console.WriteLine($"✅ Notificación enviada exitosamente al propietario: {propietario.Email}");
+        //                }
+        //            }
+        //            catch (Exception emailEx)
+        //            {
+        //                // Log del error pero no falla la reserva
+        //                Console.WriteLine($"Error al enviar notificación por email: {emailEx.Message}");
+        //            }
+        //        }
+
+        //        return Ok(new
+        //        {
+        //            message = "Reserva creada exitosamente",
+        //            reservaId = reserva.Id,
+        //            emailEnviado = propietario != null && !string.IsNullOrEmpty(propietario.Email)
+        //        });
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        return BadRequest(Tools.Tools.ExceptionMessage(e));
+        //    }
+        //}
+
         [HttpPost]
         [Route("[action]")]
         public async Task<ActionResult> AddAsync([FromBody] Reserva reserva)
@@ -499,75 +632,105 @@ namespace EasyParkingAPI.Controllers
                 DataContext dataContext = new DataContext();
                 reserva.UserId = _UserId;
 
-                // Contrar unica reserva para determinado vehiculo
-                var result = await dataContext.Reservas
-                    .AnyAsync(x => x.UserId == reserva.UserId && x.Patente == reserva.Patente && (x.Estado == EstadoReserva.ESPERANDO_ARRIBO || x.Estado == EstadoReserva.ARRIBO_EXITOSO));
+                // **VALIDACIONES BÁSICAS DE FECHAS**
+                if (reserva.FechaInicio == default || reserva.FechaFin == default)
+                    return BadRequest("ERROR.. Debe especificar la fecha de inicio y fin de la reserva");
 
-                if (result)
-                    return BadRequest("ERROR.. Ya tiene una reserva realizada con este vehículo en curso.");
+                if (reserva.FechaInicio >= reserva.FechaFin)
+                    return BadRequest("ERROR.. La fecha de inicio debe ser anterior a la fecha de fin");
 
-                // Validar vehículo
+                if (reserva.FechaInicio < DateTime.Now)
+                    return BadRequest("ERROR.. No puede hacer reservas para fechas pasadas");
+
+                // **VALIDAR QUE NO TENGA RESERVAS ACTIVAS CON ESTE VEHÍCULO**
+                var tieneReservaActiva = await dataContext.Reservas
+                    .AnyAsync(x => x.UserId == reserva.UserId &&
+                                  x.VehiculoId == reserva.VehiculoId &&
+                                  (x.Estado == EstadoReserva.ESPERANDO_ARRIBO ||
+                                   x.Estado == EstadoReserva.ARRIBO_EXITOSO));
+
+                if (tieneReservaActiva)
+                    return BadRequest("ERROR.. Ya tiene una reserva activa con este vehículo");
+
+                // **VALIDAR VEHÍCULO**
                 var vehiculo = await dataContext.Vehiculos
-                    .Where(x => x.Id == reserva.VehiculoId)
+                    .Where(x => x.Id == reserva.VehiculoId && x.UserId == _UserId)
                     .FirstOrDefaultAsync();
 
                 if (vehiculo == null)
                     return BadRequest("ERROR.. No se encontró su vehículo");
 
-                // Validar datos de alojamiento
-                var datoVehiculoSobreAlojado = await dataContext.DataVehiculoAlojados
-                    .Where(x => x.EstacionamientoId == reserva.EstacionamientoId &&
-                                x.TipoDeVehiculo == vehiculo.TipoDeVehiculo)
-                    .FirstOrDefaultAsync();
+                // Asignar el tipo de vehículo a la reserva
+                reserva.TipoDeVehiculo = vehiculo.TipoDeVehiculo;
+                reserva.Patente = vehiculo.Patente;
 
-                if (datoVehiculoSobreAlojado == null)
-                    return BadRequest($"ERROR.. El tipo de su vehículo ({vehiculo.TipoDeVehiculo}) no puede ser alojado en este lugar, ya que no es admitido");
-
-                // Validar capacidad
-                if (datoVehiculoSobreAlojado.CapacidadDeAlojamiento > datoVehiculoSobreAlojado.CantidadActualAlojados)
-                {
-                    datoVehiculoSobreAlojado.CantidadActualAlojados++;
-                }
-                else
-                {
-                    return BadRequest("ERROR.. No hay más cupos disponibles para este vehículo");
-                }
-
-                // Obtener datos del estacionamiento
+                // **OBTENER ESTACIONAMIENTO**
                 var estacionamiento = await dataContext.Estacionamientos
+                    .Include(e => e.Jornadas)
+                        .ThenInclude(j => j.Horarios)
                     .Where(x => x.Id == reserva.EstacionamientoId)
                     .FirstOrDefaultAsync();
 
                 if (estacionamiento == null)
                     return BadRequest("ERROR.. No se encontró el estacionamiento");
 
-                // Obtener datos del propietario del estacionamiento
+                if (estacionamiento.PublicacionPausada)
+                    return BadRequest("ERROR.. Este estacionamiento no está disponible actualmente");
+
+                // **VALIDAR QUE EL TIPO DE VEHÍCULO SEA ADMITIDO**
+                var datoVehiculoAdmitido = await dataContext.DataVehiculoAlojados
+                    .Where(x => x.EstacionamientoId == reserva.EstacionamientoId &&
+                                x.TipoDeVehiculo == vehiculo.TipoDeVehiculo)
+                    .FirstOrDefaultAsync();
+
+                if (datoVehiculoAdmitido == null)
+                    return BadRequest($"ERROR.. El tipo de su vehículo ({vehiculo.TipoDeVehiculo}) no es admitido en este estacionamiento");
+
+                // **VALIDAR JORNADAS (que el estacionamiento esté abierto)**
+                if (!ValidarJornadasDisponibles(estacionamiento.Jornadas, reserva.FechaInicio, reserva.FechaFin))
+                    return BadRequest("ERROR.. El estacionamiento no está disponible en el horario solicitado. Revise los días y horarios de operación.");
+
+                // **BUSCAR PLAZA DISPONIBLE SIN SOLAPAMIENTOS**
+                var plazaDisponible = await BuscarPlazaDisponibleSinSolapamiento(
+                    dataContext,
+                    reserva.EstacionamientoId,
+                    vehiculo.TipoDeVehiculo,
+                    reserva.FechaInicio,
+                    reserva.FechaFin
+                );
+
+                if (plazaDisponible == null)
+                    return BadRequest($"ERROR.. No hay plazas disponibles para {vehiculo.TipoDeVehiculo} en las fechas seleccionadas. Todas las plazas están ocupadas en ese período.");
+
+                // **ASIGNAR LA PLAZA A LA RESERVA**
+                reserva.PlazaId = plazaDisponible.Id;
+
+                // **CALCULAR MONTO TOTAL**
+                decimal montoTotal = CalcularMontoReserva(
+                    datoVehiculoAdmitido,
+                    reserva.FechaInicio,
+                    reserva.FechaFin,
+                    reserva.Monto // Monto de reserva inicial
+                );
+
+                reserva.Monto = montoTotal;
+
+                // **OBTENER DATOS PARA NOTIFICACIONES**
                 var propietario = await _userManager.FindByIdAsync(estacionamiento.UserId);
-
-                if (propietario == null || string.IsNullOrEmpty(propietario.Email))
-                {
-                    // Log del error pero continúa con la reserva
-                    Console.WriteLine("Advertencia: No se pudo obtener el email del propietario");
-                }
-
-                // Obtener datos del cliente (usuario que hace la reserva)
                 var cliente = await _userManager.FindByIdAsync(reserva.UserId);
 
                 if (cliente == null)
                     return BadRequest("ERROR.. No se encontraron los datos del cliente");
 
-                // Guardar cambios en la base de datos
-                dataContext.DataVehiculoAlojados.Update(datoVehiculoSobreAlojado);
+                // **GUARDAR LA RESERVA**
                 await dataContext.Reservas.AddAsync(reserva);
                 await dataContext.SaveChangesAsync();
 
-                // Preparar y enviar notificación por email al propietario
+                // **ENVIAR NOTIFICACIÓN POR EMAIL**
                 if (propietario != null && !string.IsNullOrEmpty(propietario.Email))
                 {
                     try
                     {
-                        DateTime fechaCreacionMastiempoDeEspera = reserva.FechaDeCreacion;
-
                         var notificacion = new ReservationNotificationDTO
                         {
                             // Datos del cliente
@@ -580,51 +743,512 @@ namespace EasyParkingAPI.Controllers
                             NombreDelEstacionamiento = estacionamiento.Nombre,
                             DireccionDelEstacionamiento = estacionamiento.Direccion ?? "No especificada",
                             TipoDeLugarDelEstacionamiento = estacionamiento.TipoDeLugar,
-                            MontoDeLaReserva = reserva.Monto,
+                            MontoDeLaReserva = montoTotal,
 
                             // Datos adicionales
                             EmailPropietario = propietario.Email,
-                            FechaHoraReserva = DateTime.Now,
-                            FechaHoraExpiracion = fechaCreacionMastiempoDeEspera.AddMinutes(estacionamiento.TiempoDeEsperaEnMinutos),
-                            NumeroReserva = reserva.Id.ToString()
+                            FechaHoraReserva = reserva.FechaDeCreacion,
+                            FechaHoraExpiracion = reserva.FechaDeExpiracion,
+                            FechaInicio = reserva.FechaInicio,
+                            FechaFin = reserva.FechaFin,
+                            NumeroReserva = reserva.Id.ToString(),
+                            NumeroPlaza = plazaDisponible.Id.ToString(),
+                            CodigoDeValidacion = reserva.CodigoDeValidacion
                         };
 
                         bool emailEnviado = await SendReservationEmail(notificacion);
 
-                        if (!emailEnviado)
-                        {
-                            Console.WriteLine($"Advertencia: Reserva creada pero no se pudo enviar email de notificación. ReservaId: {reserva.Id}");
-                        }
-                        else
+                        if (emailEnviado)
                         {
                             Console.WriteLine($"✅ Notificación enviada exitosamente al propietario: {propietario.Email}");
                         }
                     }
                     catch (Exception emailEx)
                     {
-                        // Log del error pero no falla la reserva
                         Console.WriteLine($"Error al enviar notificación por email: {emailEx.Message}");
                     }
                 }
 
                 return Ok(new
                 {
+                    success = true,
                     message = "Reserva creada exitosamente",
-                    reservaId = reserva.Id,
+                    reserva = new
+                    {
+                        id = reserva.Id,
+                        plazaId = plazaDisponible.Id,
+                        codigoValidacion = reserva.CodigoDeValidacion,
+                        fechaInicio = reserva.FechaInicio,
+                        fechaFin = reserva.FechaFin,
+                        monto = montoTotal,
+                        estado = reserva.Estado.ToString(),
+                        fechaExpiracion = reserva.FechaDeExpiracion
+                    },
                     emailEnviado = propietario != null && !string.IsNullOrEmpty(propietario.Email)
                 });
             }
             catch (Exception e)
             {
-                return BadRequest(Tools.Tools.ExceptionMessage(e));
+                return BadRequest($"ERROR.. {Tools.Tools.ExceptionMessage(e)}");
             }
         }
 
-        // ============================================
-        // MÉTODO AUXILIAR PARA ENVIAR EMAIL DE RESERVA
-        // (Si no lo tienes ya en el AccountController, agrégalo aquí)
-        // ============================================
+        /// <summary>
+        /// Busca una plaza disponible verificando que NO haya solapamiento de reservas
+        /// ESTE ES EL MÉTODO CLAVE PARA EVITAR CONFLICTOS
+        /// </summary>
+        private async Task<Plaza> BuscarPlazaDisponibleSinSolapamiento(
+            DataContext dataContext,
+            int estacionamientoId,
+            TipoDeVehiculo tipoDeVehiculo,
+            DateTime fechaInicio,
+            DateTime fechaFin)
+        {
+            // 1. Obtener todas las plazas del estacionamiento para este tipo de vehículo
+            var plazasDelTipo = await dataContext.Plazas
+                .Where(p => p.EstacionamientoId == estacionamientoId &&
+                            p.TipoDeVehiculo == tipoDeVehiculo)
+                .ToListAsync();
 
+            if (!plazasDelTipo.Any())
+                return null; // No hay plazas de este tipo
+
+            // 2. Obtener TODAS las reservas ACTIVAS que puedan solaparse con el período solicitado
+            // Una reserva se solapa si: su inicio es antes del fin solicitado Y su fin es después del inicio solicitado
+            var reservasEnPeriodo = await dataContext.Reservas
+                .Where(r => r.EstacionamientoId == estacionamientoId &&
+                            r.TipoDeVehiculo == tipoDeVehiculo &&
+                            // Solo considerar reservas activas/confirmadas
+                            (r.Estado == EstadoReserva.ESPERANDO_ARRIBO ||
+                             r.Estado == EstadoReserva.ARRIBO_EXITOSO) &&
+                            // Condición de solapamiento: las reservas se solapan si:
+                            // La reserva existente comienza ANTES de que termine la nueva solicitud
+                            r.FechaInicio < fechaFin &&
+                            // Y la reserva existente termina DESPUÉS de que comience la nueva solicitud
+                            r.FechaFin > fechaInicio)
+                .ToListAsync();
+
+            // 3. Buscar la primera plaza que NO tenga reservas que se solapen
+            foreach (var plaza in plazasDelTipo)
+            {
+                // Verificar si esta plaza específica tiene alguna reserva que se solape
+                bool plazaOcupada = reservasEnPeriodo.Any(r => r.PlazaId == plaza.Id);
+
+                if (!plazaOcupada)
+                {
+                    // ¡Plaza disponible encontrada!
+                    return plaza;
+                }
+            }
+
+            // No se encontró ninguna plaza disponible
+            return null;
+        }
+
+        /// <summary>
+        /// Valida que el estacionamiento esté abierto (jornadas) en las fechas solicitadas
+        /// </summary>
+        private bool ValidarJornadasDisponibles(
+            List<Jornada> jornadas,
+            DateTime fechaInicio,
+            DateTime fechaFin)
+        {
+            if (jornadas == null || !jornadas.Any())
+                return false; // Si no hay jornadas configuradas, no está disponible
+
+            // Validar cada día entre fechaInicio y fechaFin
+            DateTime fechaActual = fechaInicio.Date;
+
+            while (fechaActual <= fechaFin.Date)
+            {
+                // Convertir DayOfWeek a tu enum Dia
+                Dia diaEnum = ConvertirDayOfWeekADia(fechaActual.DayOfWeek);
+
+                var jornadaDelDia = jornadas.FirstOrDefault(j => j.DiaDeLaSemana == diaEnum);
+
+                if (jornadaDelDia == null || jornadaDelDia.Horarios == null || !jornadaDelDia.Horarios.Any())
+                    return false; // Este día no está configurado o no tiene horarios
+
+                // Si es el primer día, validar hora de inicio
+                if (fechaActual.Date == fechaInicio.Date)
+                {
+                    bool horaInicioValida = jornadaDelDia.Horarios.Any(h =>
+                    {
+                        var inicioRango = new TimeSpan(h.DesdeHora, h.DesdeMinuto, 0);
+                        var finRango = new TimeSpan(h.HastaHora, h.HastaMinuto, 0);
+                        return fechaInicio.TimeOfDay >= inicioRango && fechaInicio.TimeOfDay <= finRango;
+                    });
+
+                    if (!horaInicioValida)
+                        return false;
+                }
+
+                // Si es el último día, validar hora de fin
+                if (fechaActual.Date == fechaFin.Date)
+                {
+                    bool horaFinValida = jornadaDelDia.Horarios.Any(h =>
+                    {
+                        var inicioRango = new TimeSpan(h.DesdeHora, h.DesdeMinuto, 0);
+                        var finRango = new TimeSpan(h.HastaHora, h.HastaMinuto, 0);
+                        return fechaFin.TimeOfDay >= inicioRango && fechaFin.TimeOfDay <= finRango;
+                    });
+
+                    if (!horaFinValida)
+                        return false;
+                }
+
+                // Para días intermedios, solo verificar que exista la jornada
+                // (ya validamos arriba que jornadaDelDia existe y tiene horarios)
+
+                fechaActual = fechaActual.AddDays(1);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Convierte DayOfWeek del sistema a tu enum Dia personalizado
+        /// </summary>
+        private Dia ConvertirDayOfWeekADia(DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Monday => Dia.LUNES,
+                DayOfWeek.Tuesday => Dia.MARTES,
+                DayOfWeek.Wednesday => Dia.MIERCOLES,
+                DayOfWeek.Thursday => Dia.JUEVES,
+                DayOfWeek.Friday => Dia.VIERNES,
+                DayOfWeek.Saturday => Dia.SABADO,
+                DayOfWeek.Sunday => Dia.DOMINGO,
+                _ => Dia.LUNES
+            };
+        }
+
+        /// <summary>
+        /// Calcula el monto total según la duración y las tarifas configuradas
+        /// </summary>
+        private decimal CalcularMontoReserva(
+            DataVehiculoAlojado datoVehiculo,
+            DateTime fechaInicio,
+            DateTime fechaFin,
+            decimal montoReservaBase)
+        {
+            TimeSpan duracion = fechaFin - fechaInicio;
+
+            // Seleccionar la tarifa más apropiada según la duración
+            if (duracion.TotalDays >= 30)
+            {
+                // Tarifa mensual
+                int meses = (int)Math.Ceiling(duracion.TotalDays / 30);
+                return (datoVehiculo.Tarifa_Mes * meses) + montoReservaBase;
+            }
+            else if (duracion.TotalDays >= 7)
+            {
+                // Tarifa semanal
+                int semanas = (int)Math.Ceiling(duracion.TotalDays / 7);
+                return (datoVehiculo.Tarifa_Semana * semanas) + montoReservaBase;
+            }
+            else if (duracion.TotalDays >= 1)
+            {
+                // Tarifa diaria
+                int dias = (int)Math.Ceiling(duracion.TotalDays);
+                return (datoVehiculo.Tarifa_Dia * dias) + montoReservaBase;
+            }
+            else
+            {
+                // Tarifa por hora
+                int horas = (int)Math.Ceiling(duracion.TotalHours);
+                if (horas < 1) horas = 1; // Mínimo 1 hora
+                return (datoVehiculo.Tarifa_Hora * horas) + montoReservaBase;
+            }
+        }
+
+
+
+        //--------------------------------------------
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<ActionResult> AddMultipleAsync([FromBody] List<Reserva> reservas)
+        {
+            try
+            {
+                DataContext dataContext = new DataContext();
+
+                if (reservas == null || !reservas.Any())
+                    return BadRequest("ERROR.. Debe enviar al menos una reserva");
+
+                if (reservas.Count > 100)
+                    return BadRequest("ERROR.. No puede crear más de 100 reservas a la vez");
+
+                var reservasCreadas = new List<object>();
+                var reservasRechazadas = new List<object>();
+
+                // Variables para logging y debugging
+                int totalProcesadas = 0;
+
+                foreach (var reserva in reservas)
+                {
+                    totalProcesadas++;
+
+                    try
+                    {
+                        reserva.UserId = _UserId;
+
+                        // Validaciones básicas
+                        if (reserva.FechaInicio >= reserva.FechaFin)
+                        {
+                            reservasRechazadas.Add(new
+                            {
+                                fecha = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                                motivo = "Fecha de inicio debe ser anterior a fecha fin"
+                            });
+                            Console.WriteLine($"❌ [{totalProcesadas}] Rechazada - Fecha inválida: {reserva.FechaInicio:dd/MM/yyyy}");
+                            continue;
+                        }
+
+                        if (reserva.FechaInicio < DateTime.Now)
+                        {
+                            reservasRechazadas.Add(new
+                            {
+                                fecha = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                                motivo = "No puede hacer reservas para fechas pasadas"
+                            });
+                            Console.WriteLine($"❌ [{totalProcesadas}] Rechazada - Fecha pasada: {reserva.FechaInicio:dd/MM/yyyy}");
+                            continue;
+                        }
+
+                        // Validar vehículo
+                        var vehiculo = await dataContext.Vehiculos
+                            .Where(x => x.Id == reserva.VehiculoId && x.UserId == _UserId)
+                            .FirstOrDefaultAsync();
+
+                        if (vehiculo == null)
+                        {
+                            reservasRechazadas.Add(new
+                            {
+                                fecha = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                                motivo = "No se encontró el vehículo"
+                            });
+                            Console.WriteLine($"❌ [{totalProcesadas}] Rechazada - Vehículo no encontrado");
+                            continue;
+                        }
+
+                        reserva.TipoDeVehiculo = vehiculo.TipoDeVehiculo;
+                        reserva.Patente = vehiculo.Patente;
+
+                        // Obtener estacionamiento
+                        var estacionamiento = await dataContext.Estacionamientos
+                            .Include(e => e.Jornadas)
+                                .ThenInclude(j => j.Horarios)
+                            .Where(x => x.Id == reserva.EstacionamientoId)
+                            .FirstOrDefaultAsync();
+
+                        if (estacionamiento == null)
+                        {
+                            reservasRechazadas.Add(new
+                            {
+                                fecha = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                                motivo = "No se encontró el estacionamiento"
+                            });
+                            Console.WriteLine($"❌ [{totalProcesadas}] Rechazada - Estacionamiento no encontrado");
+                            continue;
+                        }
+
+                        if (estacionamiento.PublicacionPausada)
+                        {
+                            reservasRechazadas.Add(new
+                            {
+                                fecha = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                                motivo = "Estacionamiento no disponible (pausado)"
+                            });
+                            Console.WriteLine($"❌ [{totalProcesadas}] Rechazada - Estacionamiento pausado");
+                            continue;
+                        }
+
+                        // Validar tipo de vehículo admitido
+                        var datoVehiculoAdmitido = await dataContext.DataVehiculoAlojados
+                            .Where(x => x.EstacionamientoId == reserva.EstacionamientoId &&
+                                        x.TipoDeVehiculo == vehiculo.TipoDeVehiculo)
+                            .FirstOrDefaultAsync();
+
+                        if (datoVehiculoAdmitido == null)
+                        {
+                            reservasRechazadas.Add(new
+                            {
+                                fecha = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                                motivo = $"Tipo de vehículo ({vehiculo.TipoDeVehiculo}) no admitido en este estacionamiento"
+                            });
+                            Console.WriteLine($"❌ [{totalProcesadas}] Rechazada - Tipo de vehículo no admitido: {vehiculo.TipoDeVehiculo}");
+                            continue;
+                        }
+
+                        // Validar jornadas
+                        if (!ValidarJornadasDisponibles(estacionamiento.Jornadas, reserva.FechaInicio, reserva.FechaFin))
+                        {
+                            var diaSemana = reserva.FechaInicio.ToString("dddd", new System.Globalization.CultureInfo("es-ES"));
+                            reservasRechazadas.Add(new
+                            {
+                                fecha = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                                motivo = $"Estacionamiento no disponible el {diaSemana} en el horario {reserva.FechaInicio:HH:mm}-{reserva.FechaFin:HH:mm}"
+                            });
+                            Console.WriteLine($"❌ [{totalProcesadas}] Rechazada - Fuera de jornada: {reserva.FechaInicio:dd/MM/yyyy HH:mm}");
+                            continue;
+                        }
+
+                        // Buscar plaza disponible
+                        var plazaDisponible = await BuscarPlazaDisponibleSinSolapamiento(
+                            dataContext,
+                            reserva.EstacionamientoId,
+                            vehiculo.TipoDeVehiculo,
+                            reserva.FechaInicio,
+                            reserva.FechaFin
+                        );
+
+                        if (plazaDisponible == null)
+                        {
+                            reservasRechazadas.Add(new
+                            {
+                                fecha = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                                motivo = $"No hay plazas disponibles para {vehiculo.TipoDeVehiculo} en este horario. Todas las plazas están ocupadas."
+                            });
+                            Console.WriteLine($"❌ [{totalProcesadas}] Rechazada - Sin plazas disponibles: {reserva.FechaInicio:dd/MM/yyyy HH:mm}");
+                            continue;
+                        }
+
+                        // Asignar plaza
+                        reserva.PlazaId = plazaDisponible.Id;
+
+                        // Calcular monto
+                        decimal montoTotal = CalcularMontoReserva(
+                            datoVehiculoAdmitido,
+                            reserva.FechaInicio,
+                            reserva.FechaFin,
+                            reserva.Monto
+                        );
+
+                        reserva.Monto = montoTotal;
+
+                        // Guardar reserva
+                        await dataContext.Reservas.AddAsync(reserva);
+                        await dataContext.SaveChangesAsync();
+
+                        reservasCreadas.Add(new
+                        {
+                            id = reserva.Id,
+                            plazaId = plazaDisponible.Id,
+                            codigoValidacion = reserva.CodigoDeValidacion,
+                            fechaInicio = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                            fechaFin = reserva.FechaFin.ToString("dd/MM/yyyy HH:mm"),
+                            monto = montoTotal
+                        });
+
+                        Console.WriteLine($"✅ [{totalProcesadas}] Reserva creada: ID {reserva.Id} - Plaza {plazaDisponible.Id} - {reserva.FechaInicio:dd/MM/yyyy HH:mm}");
+                    }
+                    catch (Exception exReserva)
+                    {
+                        reservasRechazadas.Add(new
+                        {
+                            fecha = reserva.FechaInicio.ToString("dd/MM/yyyy HH:mm"),
+                            motivo = $"Error al procesar: {exReserva.Message}"
+                        });
+                        Console.WriteLine($"❌ [{totalProcesadas}] Error al crear reserva: {exReserva.Message}");
+                        Console.WriteLine($"   Stack Trace: {exReserva.StackTrace}");
+                    }
+                }
+
+                // **CLAVE: Validar si se creó al menos una reserva**
+                if (!reservasCreadas.Any())
+                {
+                    // SI NINGUNA RESERVA FUE CREADA, RETORNAR ERROR
+                    var mensajesError = reservasRechazadas
+                        .Select(r => $"• {((dynamic)r).fecha}: {((dynamic)r).motivo}")
+                        .ToList();
+
+                    string mensajeCompleto = $"No se pudo crear ninguna reserva. Motivos:\n\n{string.Join("\n", mensajesError.Take(5))}";
+
+                    if (mensajesError.Count > 5)
+                    {
+                        mensajeCompleto += $"\n\n... y {mensajesError.Count - 5} más.";
+                    }
+
+                    Console.WriteLine($"⚠️ NINGUNA RESERVA CREADA - Total rechazadas: {reservasRechazadas.Count}");
+
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "No se pudo crear ninguna reserva",
+                        error = mensajeCompleto,
+                        totalSolicitadas = reservas.Count,
+                        reservasCreadas = 0,
+                        reservasRechazadas = reservasRechazadas.Count,
+                        detalleReservasRechazadas = reservasRechazadas
+                    });
+                }
+
+                // Enviar notificación por email al propietario
+                if (reservasCreadas.Any())
+                {
+                    try
+                    {
+                        var estacionamiento = await dataContext.Estacionamientos
+                            .FirstOrDefaultAsync(e => e.Id == reservas.First().EstacionamientoId);
+
+                        var propietario = await _userManager.FindByIdAsync(estacionamiento?.UserId);
+                        var cliente = await _userManager.FindByIdAsync(_UserId);
+
+                        if (propietario != null && !string.IsNullOrEmpty(propietario.Email) && cliente != null)
+                        {
+                            Console.WriteLine($"📧 Notificando al propietario: {reservasCreadas.Count} reservas creadas");
+                            // Aquí puedes enviar un email consolidado con todas las reservas
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        Console.WriteLine($"Error al enviar notificación: {emailEx.Message}");
+                    }
+                }
+
+                // **SI HAY AL MENOS UNA CREADA, RETORNAR OK CON DETALLES**
+                string mensajeResultado;
+                bool todasCreadas = !reservasRechazadas.Any();
+
+                if (todasCreadas)
+                {
+                    mensajeResultado = $"✅ Todas las reservas fueron creadas exitosamente ({reservasCreadas.Count} reservas)";
+                }
+                else if (reservasRechazadas.Count > reservasCreadas.Count)
+                {
+                    mensajeResultado = $"⚠️ Se crearon {reservasCreadas.Count} reservas, pero {reservasRechazadas.Count} fueron rechazadas. Revise los detalles.";
+                }
+                else
+                {
+                    mensajeResultado = $"✅ Se crearon {reservasCreadas.Count} reservas exitosamente. {reservasRechazadas.Count} fueron rechazadas.";
+                }
+
+                Console.WriteLine($"📊 Resumen: {reservasCreadas.Count} creadas | {reservasRechazadas.Count} rechazadas | {totalProcesadas} procesadas");
+
+                return Ok(new
+                {
+                    success = true,
+                    message = mensajeResultado,
+                    totalSolicitadas = reservas.Count,
+                    reservasCreadas = reservasCreadas.Count,
+                    reservasRechazadas = reservasRechazadas.Count,
+                    todasCreadas = todasCreadas,
+                    detalleReservasCreadas = reservasCreadas,
+                    detalleReservasRechazadas = reservasRechazadas
+                });
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"💥 Error crítico en AddMultipleAsync: {e.Message}");
+                Console.WriteLine($"   Stack Trace: {e.StackTrace}");
+                return BadRequest($"ERROR.. {Tools.Tools.ExceptionMessage(e)}");
+            }
+        }
+
+        //--------------------------------------------
         private async Task<bool> SendReservationEmail(ReservationNotificationDTO reservation)
         {
             try
@@ -2962,6 +3586,9 @@ namespace EasyParkingAPI.Controllers
 </body>
 </html>";
         }
+
+        //-------------------------------------------
+
 
     }
 

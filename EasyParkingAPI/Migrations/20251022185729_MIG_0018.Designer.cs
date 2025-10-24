@@ -4,6 +4,7 @@ using EasyParkingAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EasyParkingAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20251022185729_MIG_0018")]
+    partial class MIG_0018
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -177,9 +180,15 @@ namespace EasyParkingAPI.Migrations
                     b.Property<int>("EstacionamientoId")
                         .HasColumnType("int");
 
+                    b.Property<int>("ReservaId")
+                        .HasColumnType("int");
+
                     b.Property<string>("TipoDeVehiculo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -262,12 +271,8 @@ namespace EasyParkingAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PlazaId")
+                    b.Property<int>("TipoDeVehiculo")
                         .HasColumnType("int");
-
-                    b.Property<string>("TipoDeVehiculo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -329,8 +334,9 @@ namespace EasyParkingAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("TipoDeVehiculo")
-                        .HasColumnType("int");
+                    b.Property<string>("TipoDeVehiculo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
