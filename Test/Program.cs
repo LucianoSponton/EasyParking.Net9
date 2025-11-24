@@ -15,136 +15,63 @@ namespace Test
     class Program
     {
         // **** Con esto se usa la api de arriba o la local *** ///
-        static string Uri = "http://localhost:5000";
-       // static string Uri = "http://40.118.242.96:12595";
+       // static string Uri = "http://localhost:5000";
+        static string Uri = "http://40.118.242.96:12595";
         static HttpClient httpClient { get; set; } = new HttpClient();
 
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
 
-            //UserInfo user = new UserInfo();
-            //user.Apellido = "sponton";
-            //user.Nombre = "luciano";
-            //user.Email = "lucianosponton14@hotmail.com";
-            //user.Password = "xxx123";
-            //user.UserName = "lucho123";
-
-            //UserInfo user = new UserInfo();
-            //user.Apellido = "sponton";
-            //user.Nombre = "leandro";
-            //user.Email = "leandrosponton14@hotmail.com";
-            //user.Password = "xxx124";
-            //user.UserName = "leo";
-
-            UserInfo user = new UserInfo();
-            user.Apellido = "ronaldo";
-            user.Nombre = "cristiano";
-            user.Email = "cristiano@hotmail.com";
-            user.Password = "cristiano123";
-            user.UserName = "cristiano@hotmail.com";
-            user.NumeroDeDocumento = "40256941";
-            user.TipoDeDocumento = Model.Enums.TipoDeDocumento.DNI;
-            user.Telefono = "3777111256";
-
             try
             {
-                //PruebaLogin().Wait();
-
-                //for (int i = 0; i < 4; i++)
-                //{
-                //    Agregar().Wait();
-                //}
-                //  GetAllEstacionamientos().Wait();
-                //SendImage().Wait();
-                //var lista = GetAllInclude().Result;
-                //Estacionamiento estacionamiento = lista[0];
-                //estacionamiento.Id = 0;
-                //Delete(11).Wait();-27.4552846,-58.9882253// -29.1381483,-59.2623064
-                //var ciudad = GetItem("-28.9858189","-59.1035871");
-                //ServiceWebApi.DTO.ParametroBusquedaDTO parametroBusquedaDTO = new ServiceWebApi.DTO.ParametroBusquedaDTO();
-                //parametroBusquedaDTO.TipoDeVehiculos.Add("moto");
-                //parametroBusquedaDTO.TipoDeLugars.Add("Terreno al aire libre");
-                //parametroBusquedaDTO.TipoDeLugars.Add("Galpon abierto");
-                //AddFavorito().Wait();
-                //AddVehiculo().Wait();
-                //AddReserva().Wait();
-                //var x = GetMisReservas().Result;
-                //var x = GetReservasModalidadDueño(EstadoReserva.ESPERANDO_ARRIBO).Result;
-                //var x = GetAllMisVehiculos().Result;
-                //var x = Busqueda("casa").Result;
-                //var x = Busqueda().Result;
-                //CrearUsuaio().Wait();
-                // GetReseñas().Wait();
-
-                //Login(Uri,"lucho2798@gmail.com", "0zt82r2s").Wait();
-                //ResetPassword("lucho2798@gmail.com").Wait();
-                ChangePassword("lucho2798@gmail.com").Wait();
-
-                //var x = GetAllInclude().Result;
-                //var x = GetVehiculoByPatente("AA658V").Result;
-                // var x = IsFavoriteAsync(12).Result;
-
-                //var x = GetReservasModalidadDueño2().Result;
-                //UnLockUser("analia@hotmail.com").Wait();
-                //var z = GetAllFavorito().Result;
-                //var z = GetJornadas(71).Result;
-                //AddFavorito(75).Wait();
-                /*/var lista = GetConsultaGenerica(parametroBusquedaDTO).Result;
-                //var qwery = GetConsultaSimple("55 ").Result;
-                //Agregar().Wait();
-                //var estacionamiento = Get(17).Result;
-                // Update(estacionamiento).Wait();
-                //var estacionamiento2 = Get(9).Result;
-
-                //var webapiaccess = WebApiAccess.GetAccessAsync("http://40.118.242.96:12595", "debranahir@gmail.com", "debra1234", 3, 60).Result;
-                //EstacionamientoServiceWebApi estacionamientoServiceWebApi = new EstacionamientoServiceWebApi(webapiaccess);
-
-                //for (int i = 20; i < 30; i++)
-                //{
-                //    estacionamientoServiceWebApi.SetInactivo(i).Wait();
-                //}
-
-                //AccountServiceWebApi accountServiceWebApi02 = new AccountServiceWebApi(webapiaccess);
-                //AgregarEstacionamientoAsync();
-                //GetAllEstacionamientos().Wait();
-                //var userr = accountServiceWebApi02.UserUnLock("cristiano@hotmail.com");
-
-                //** Crear usuario **////
-                //AccountServiceWebApi.CreateUser(user);
-
-                /// *** logear usuario *** /// 
-                //string token = AccountServiceWebApi.Login("cristiano@hotmail.com", "cristiano123");
-                //string token = AccountServiceWebApi.Login("leandrosponton14@hotmail.com", "xxx124");
-
-                /// *** Consultar usuario ** /// 
-                //string token = AccountServiceWebApi.Login("cristiano@hotmail.com", "cristiano123");
-                //var userinfo = AccountServiceWebApi.GetUserInfo("cristiano@hotmail.com", "cristiano123").Result;
-
-                /// update usuario //
-                // string token = AccountServiceWebApi.Login("cristiano@hotmail.com", "cristiano123");
-                //UserInfo userinfo = new UserInfo();
-                //userinfo.Apodo = "xx";
-                //AccountServiceWebApi.Update(userinfo, "cristiano@hotmail.com", "cristiano123");
-
-                /// eliminar usuario /// 
-                //token = AccountServiceWebApi.Login("cristiano@hotmail.com", "cristiano123");
-                //AccountServiceWebApi.UserLock("cristiano@hotmail.com");
-
-                //string token = AccountServiceWebApi.Login("EasyParkingAdmin", "easyparking123");
-                //AccountServiceWebApi.UserUnLock("analia@hotmail.com");
-                //string token = AccountServiceWebApi.Login("analia@hotmail.com", "analia123");
-                //Console.WriteLine("ok");
+                AddBloqueoPlaza().Wait();           
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
-            //accountServiceWebApi.Update(user);
-            //accountServiceWebApi.UserLock(user.Email);
-            //accountServiceWebApi.UserUnLock(user.Email);
-            //accountServiceWebApi.UserLockItSelf(user.Email, user.Password);
+
             Console.ReadKey();
+
+        }
+
+        static async Task AddBloqueoPlaza()
+        {
+            try
+            {
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "analia@hotmail.com", "analia123", 3, 60);
+                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "admin", "admin", 3, 180);
+                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "EasyParkingAdmin", "luciano123", 3, 180);
+
+                BloqueoPlazaServiceWebApi bloqueoPlazaServiceWebApi = new BloqueoPlazaServiceWebApi(webapiaccess);
+
+                var bloqueoFeriado = new BloqueoPlaza
+                {
+                    EstacionamientoId = 80,
+                    UserId = "b88889a4-2012-4c6b-979b-70d98c1867ba",
+                    PlazaId = 48, // NULL = todas las plazas del estacionamiento
+                    TipoDeVehiculo = TipoDeVehiculo.MOTO, // NULL = todos los tipos de vehículos
+                    FechaInicio = new DateTime(2025, 12, 27, 0, 0, 0), // 25 de diciembre 00:00
+                    FechaFin = new DateTime(2025, 12, 28, 0, 0, 0), // 26 de diciembre 00:00
+                    Motivo = "Feriado - por que quiero",
+                    Observaciones = "El estacionamiento permanecerá cerrado durante este dia",
+                    Activo = true,
+                    FechaDeCreacion = DateTime.Now
+                };
+
+                await bloqueoPlazaServiceWebApi.Add(bloqueoFeriado);
+
+                Console.WriteLine("Add BloqueoPlaza Ok");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                throw ex;
+            }
 
         }
 
@@ -1022,303 +949,6 @@ namespace Test
             }
         }
 
-
-        static async Task Agregar()
-        {
-            try
-            {
-                List<string> ciudades = new List<string>();
-                ciudades.Add("La Plata");
-                ciudades.Add("San Fernando del Valle de Catamarca");
-                ciudades.Add("Resistencia");
-                ciudades.Add("Rawson");
-                ciudades.Add("Córdoba");
-                ciudades.Add("Corrientes");
-                ciudades.Add("Paraná");
-                ciudades.Add("Formosa");
-                ciudades.Add("San Salvador de Jujuy");
-                ciudades.Add("Santa Rosa");
-                ciudades.Add("La Rioja");
-                ciudades.Add("Mendoza");
-                ciudades.Add("Posadas");
-                ciudades.Add("Neuquén");
-                ciudades.Add("Viedma");
-                ciudades.Add("Salta");
-                ciudades.Add("San Luis");
-                ciudades.Add("Río Gallegos");
-                ciudades.Add("Santa Fe");
-                ciudades.Add("Santiago del Estero");
-                ciudades.Add("Ushuaia");
-                ciudades.Add("San Miguel de Tucumán");
-
-                List<string> lugares = new List<string>();
-                lugares.Add("Terreno parialmente cubierto");
-                lugares.Add("Galpón abierto");
-                lugares.Add("Galpón cerrado");
-                lugares.Add("Lugar bajo edificio");
-                lugares.Add("Casa");
-
-                Console.WriteLine("GetAccess");
-                //var webapiaccess = await WebApiAccess.GetAccessAsync("http://localhost:5000", "EasyParkingAdmin", "easyparking123");
-                var webapiaccess = await WebApiAccess.GetAccessAsync("http://40.118.242.96:12595", "debranahir@gmail.com", "debra1234", 3, 60);
-                EstacionamientoServiceWebApi estacionamientoServiceWebApi = new EstacionamientoServiceWebApi(webapiaccess);
-
-                Console.WriteLine("Preparando Estacionamiento");
-
-
-                EstacionamientoDTO estacionamiento = new EstacionamientoDTO();
-
-                Random numRandom = new Random();
-
-
-                estacionamiento.Ciudad = ciudades[numRandom.Next(0, 22)]; ;
-                estacionamiento.URL = "https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/drivers-loft-1-1643441566.jpg?resize=480:*";// // IMAGEN DEL LUGAR
-                //estacionamiento.Nombre = $"El parking {numRandom.Next(1, 999)}";// // NOMBRE DEL LUGAR
-                estacionamiento.Nombre = "Park";// // NOMBRE DEL LUGAR
-                estacionamiento.Direccion = $"Calle {numRandom.Next(1, 999)}";// // DIRECCION DEL LUGAR
-                estacionamiento.TipoDeLugar = lugares[numRandom.Next(0, 4)]; // // TIPO DEL LUGAR
-                                                                             // LOS RANGO HORARIOS YA SE CARGARON ANTES EN EL EVENTO --> btnEditarHorario_Clicked
-
-                List<RangoH> lista = new List<RangoH>();
-                RangoH r = new RangoH();
-                r.DesdeHora = numRandom.Next(6, 10);
-                r.DesdeMinuto = 0;
-                r.HastaHora = numRandom.Next(15, 22);
-                r.HastaMinuto = 30;
-                lista.Add(r);
-
-                Jornada jornada = new Jornada();
-                jornada.Horarios = lista;
-
-                switch (numRandom.Next(1, 7))
-                {
-                    case 1:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.LUNES;
-                        break;
-                    case 2:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.MARTES;
-                        break;
-                    case 3:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.MIERCOLES;
-                        break;
-                    case 4:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.JUEVES;
-                        break;
-                    case 5:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.VIERNES;
-                        break;
-                    case 6:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.SABADO;
-                        break;
-                    case 7:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.DOMINGO;
-                        break;
-                }
-
-                estacionamiento.Jornadas.Add(jornada);
-
-
-
-                //********** TEMA VEHICULOS ACEPTADOS Y SUS TARIFAS **********//
-
-                Model.DataVehiculoAlojado dataVehiculo = new Model.DataVehiculoAlojado();
-                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.AUTO;
-                dataVehiculo.CapacidadDeAlojamiento = numRandom.Next(1, 6);
-                dataVehiculo.Tarifa_Hora = numRandom.Next(50, 100);
-                dataVehiculo.Tarifa_Dia = numRandom.Next(100, 200);
-                dataVehiculo.Tarifa_Semana = numRandom.Next(200, 300);
-                dataVehiculo.Tarifa_Mes = numRandom.Next(300, 1000);
-
-
-                Model.DataVehiculoAlojado dataVehiculo1 = new Model.DataVehiculoAlojado();
-                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.MOTO;
-                dataVehiculo1.CapacidadDeAlojamiento = numRandom.Next(1, 6);
-                dataVehiculo1.Tarifa_Hora = numRandom.Next(50, 100);
-                dataVehiculo1.Tarifa_Dia = numRandom.Next(100, 200);
-                dataVehiculo1.Tarifa_Semana = numRandom.Next(200, 300);
-                dataVehiculo1.Tarifa_Mes = numRandom.Next(300, 1000);
-
-
-                Model.DataVehiculoAlojado dataVehiculo3 = new Model.DataVehiculoAlojado();
-                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.CAMIONETA;
-                dataVehiculo3.CapacidadDeAlojamiento = numRandom.Next(1, 6);
-                dataVehiculo3.Tarifa_Hora = numRandom.Next(50, 100);
-                dataVehiculo3.Tarifa_Dia = numRandom.Next(100, 200);
-                dataVehiculo3.Tarifa_Semana = numRandom.Next(200, 300);
-                dataVehiculo3.Tarifa_Mes = numRandom.Next(300, 1000);
-
-                int v = numRandom.Next(1, 4);
-
-                switch (v)
-                {
-                    case 1:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo1);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo3);
-                        break;
-                    case 2:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo1);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo3);
-                        break;
-                    case 3:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo3);
-                        break;
-                    case 4:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo1);
-                        break;
-                    case 5:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo1);
-                        break;
-                }
-
-                estacionamiento.MontoReserva = numRandom.Next(100, 150); // MONTO DE LA RESERVA
-
-                await estacionamientoServiceWebApi.Add(estacionamiento);
-
-                Console.WriteLine("Agregado Ok");
-
-            }
-            catch (Exception ex)
-            {
-
-                throw ex;
-            }
-        }
-
-        static async Task Agregar(Estacionamiento _estacionamiento)
-        {
-            try
-            {
-
-                Console.WriteLine("GetAccess");
-                //var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "EasyParkingAdmin", "easyparking123");
-                var webapiaccess = await WebApiAccess.GetAccessAsync(Uri, "debranahir@gmail.com", "debra1234", 3, 60);
-                EstacionamientoServiceWebApi estacionamientoServiceWebApi = new EstacionamientoServiceWebApi(webapiaccess);
-
-                Console.WriteLine("Preparando Estacionamiento");
-
-
-                EstacionamientoDTO estacionamiento = new EstacionamientoDTO();
-
-                Random numRandom = new Random();
-
-
-                estacionamiento.Ciudad = _estacionamiento.Ciudad;
-                estacionamiento.URL = "https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/drivers-loft-1-1643441566.jpg?resize=480:*";// // IMAGEN DEL LUGAR
-                estacionamiento.Nombre = _estacionamiento.Nombre;// // NOMBRE DEL LUGAR
-                estacionamiento.Direccion = $"Calle {numRandom.Next(1, 999)}";// // DIRECCION DEL LUGAR
-                estacionamiento.TipoDeLugar = _estacionamiento.TipoDeLugar; // // TIPO DEL LUGAR
-                                                                            // LOS RANGO HORARIOS YA SE CARGARON ANTES EN EL EVENTO --> btnEditarHorario_Clicked
-
-                List<RangoH> lista = new List<RangoH>();
-                RangoH r = new RangoH();
-                r.DesdeHora = numRandom.Next(6, 10);
-                r.DesdeMinuto = 0;
-                r.HastaHora = numRandom.Next(15, 22);
-                r.HastaMinuto = 30;
-                lista.Add(r);
-
-                Jornada jornada = new Jornada();
-                jornada.Horarios = lista;
-
-                switch (numRandom.Next(1, 7))
-                {
-                    case 1:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.LUNES;
-                        break;
-                    case 2:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.MARTES;
-                        break;
-                    case 3:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.MIERCOLES;
-                        break;
-                    case 4:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.JUEVES;
-                        break;
-                    case 5:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.VIERNES;
-                        break;
-                    case 6:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.SABADO;
-                        break;
-                    case 7:
-                        jornada.DiaDeLaSemana = Model.Enums.Dia.DOMINGO;
-                        break;
-                }
-
-                estacionamiento.Jornadas.Add(jornada);
-
-
-
-                //********** TEMA VEHICULOS ACEPTADOS Y SUS TARIFAS **********//
-
-                Model.DataVehiculoAlojado dataVehiculo = new Model.DataVehiculoAlojado();
-                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.AUTO;
-                dataVehiculo.CapacidadDeAlojamiento = numRandom.Next(1, 6);
-                dataVehiculo.Tarifa_Hora = numRandom.Next(50, 100);
-                dataVehiculo.Tarifa_Dia = numRandom.Next(100, 200);
-                dataVehiculo.Tarifa_Semana = numRandom.Next(200, 300);
-                dataVehiculo.Tarifa_Mes = numRandom.Next(300, 1000);
-
-
-                Model.DataVehiculoAlojado dataVehiculo1 = new Model.DataVehiculoAlojado();
-                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.MOTO;
-                dataVehiculo1.CapacidadDeAlojamiento = numRandom.Next(1, 6);
-                dataVehiculo1.Tarifa_Hora = numRandom.Next(50, 100);
-                dataVehiculo1.Tarifa_Dia = numRandom.Next(100, 200);
-                dataVehiculo1.Tarifa_Semana = numRandom.Next(200, 300);
-                dataVehiculo1.Tarifa_Mes = numRandom.Next(300, 1000);
-
-
-                Model.DataVehiculoAlojado dataVehiculo3 = new Model.DataVehiculoAlojado();
-                dataVehiculo.TipoDeVehiculo = TipoDeVehiculo.CAMIONETA;
-                dataVehiculo3.CapacidadDeAlojamiento = numRandom.Next(1, 6);
-                dataVehiculo3.Tarifa_Hora = numRandom.Next(50, 100);
-                dataVehiculo3.Tarifa_Dia = numRandom.Next(100, 200);
-                dataVehiculo3.Tarifa_Semana = numRandom.Next(200, 300);
-                dataVehiculo3.Tarifa_Mes = numRandom.Next(300, 1000);
-
-                int v = numRandom.Next(1, 4);
-
-                switch (v)
-                {
-                    case 1:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo1);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo3);
-                        break;
-                    case 2:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo1);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo3);
-                        break;
-                    case 3:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo3);
-                        break;
-                    case 4:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo);
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo1);
-                        break;
-                    case 5:
-                        estacionamiento.TiposDeVehiculosAdmitidos.Add(dataVehiculo1);
-                        break;
-                }
-
-                estacionamiento.MontoReserva = numRandom.Next(100, 150); // MONTO DE LA RESERVA
-
-                await estacionamientoServiceWebApi.Add(estacionamiento);
-
-                Console.WriteLine("Agregado Ok");
-
-            }
-            catch (Exception ex)
-            {
-
-                throw ex;
-            }
-        }
 
         static async Task GetAllEstacionamientos()
         {

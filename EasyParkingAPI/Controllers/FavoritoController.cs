@@ -81,7 +81,7 @@ namespace EasyParkingAPI.Controllers
 
                 var estacionamientos = await (
                     from est in dataContext.Estacionamientos
-                        .Include(e => e.TiposDeVehiculosAdmitidos)
+                        .Include(e => e.Plazas)
                         .Where(x => !x.Inactivo && !x.PublicacionPausada)
                     join fav in dataContext.Favoritos
                         .Where(x => x.UserId == _UserId)
@@ -99,7 +99,9 @@ namespace EasyParkingAPI.Controllers
                         MontoReserva = est.MontoReserva,
                         URL = est.URL,
                         Observaciones = est.Observaciones,
-                        TiposDeVehiculosAdmitidos = est.TiposDeVehiculosAdmitidos, // si necesitas proyectar más profundo conviene un mapper
+                        Plazas = est.Plazas, // si necesitas proyectar más profundo conviene un mapper
+                        Tarifas = est.Tarifas,  
+
                         Favorito = true
                     }
                 ).AsNoTracking().ToListAsync();

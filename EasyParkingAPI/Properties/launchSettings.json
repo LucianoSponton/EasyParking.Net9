@@ -1,3 +1,32 @@
+//{
+//  "iisSettings": {
+//    "windowsAuthentication": false,
+//    "anonymousAuthentication": true,
+//    "iisExpress": {
+//      "applicationUrl": "http://localhost:41694",
+//      "sslPort": 44362
+//    }
+//  },
+//  "$schema": "http://json.schemastore.org/launchsettings.json",
+//  "profiles": {
+//    "IIS Express": {
+//      "commandName": "IISExpress",
+//      "launchBrowser": true,
+//      "launchUrl": "weatherforecast",
+//      "environmentVariables": {
+//        "ASPNETCORE_ENVIRONMENT": "Development"
+//      }
+//    },
+//    "EasyParkingAPI": {
+//      "commandName": "Project",
+//      "launchUrl": "weatherforecast",
+//      "environmentVariables": {
+//        "ASPNETCORE_ENVIRONMENT": "Development"
+//      },
+//      "applicationUrl": "https://localhost:5001;http://localhost:5000"
+//    }
+//  }
+//}
 {
   "iisSettings": {
     "windowsAuthentication": false,
@@ -11,7 +40,7 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "weatherforecast",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -19,11 +48,12 @@
     },
     "EasyParkingAPI": {
       "commandName": "Project",
+      "launchBrowser": false,
       "launchUrl": "weatherforecast",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:5001;http://localhost:5000"
+      "applicationUrl": "https://0.0.0.0:5001;http://0.0.0.0:5000"
     }
   }
 }

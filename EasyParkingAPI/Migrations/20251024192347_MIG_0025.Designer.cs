@@ -4,6 +4,7 @@ using EasyParkingAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EasyParkingAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20251024192347_MIG_0025")]
+    partial class MIG_0025
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,6 +69,46 @@ namespace EasyParkingAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("BloqueoPlazas");
+                });
+
+            modelBuilder.Entity("Model.DataVehiculoAlojado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CantidadActualAlojados")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CapacidadDeAlojamiento")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EstacionamientoId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Tarifa_Dia")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Tarifa_Hora")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Tarifa_Mes")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Tarifa_Semana")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TipoDeVehiculo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EstacionamientoId");
+
+                    b.ToTable("DataVehiculoAlojados");
                 });
 
             modelBuilder.Entity("Model.Estacionamiento", b =>
@@ -179,9 +222,6 @@ namespace EasyParkingAPI.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
 
                     b.Property<int>("EstacionamientoId")
                         .HasColumnType("int");
@@ -326,40 +366,6 @@ namespace EasyParkingAPI.Migrations
                     b.ToTable("Reseñas");
                 });
 
-            modelBuilder.Entity("Model.Tarifa", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("EstacionamientoId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Tarifa_Dia")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Tarifa_Hora")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Tarifa_Mes")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Tarifa_Semana")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("TipoDeVehiculo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EstacionamientoId");
-
-                    b.ToTable("Tarifas");
-                });
-
             modelBuilder.Entity("Model.Vehiculo", b =>
                 {
                     b.Property<int>("Id")
@@ -385,6 +391,15 @@ namespace EasyParkingAPI.Migrations
                         .IsUnique();
 
                     b.ToTable("Vehiculos");
+                });
+
+            modelBuilder.Entity("Model.DataVehiculoAlojado", b =>
+                {
+                    b.HasOne("Model.Estacionamiento", null)
+                        .WithMany("TiposDeVehiculosAdmitidos")
+                        .HasForeignKey("EstacionamientoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Model.Jornada", b =>
@@ -414,22 +429,13 @@ namespace EasyParkingAPI.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Model.Tarifa", b =>
-                {
-                    b.HasOne("Model.Estacionamiento", null)
-                        .WithMany("Tarifas")
-                        .HasForeignKey("EstacionamientoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Model.Estacionamiento", b =>
                 {
                     b.Navigation("Jornadas");
 
                     b.Navigation("Plazas");
 
-                    b.Navigation("Tarifas");
+                    b.Navigation("TiposDeVehiculosAdmitidos");
                 });
 
             modelBuilder.Entity("Model.Jornada", b =>

@@ -41,7 +41,7 @@ public class ReservaExpirationService : BackgroundService
     {
         _logger.LogInformation("✅ ReservaExpirationService iniciado. Verificando reservas cada 5 minutos...");
 
-        // Esperar 30 segundos antes de la primera ejecución para dar tiempo al startup
+        // Esperar 120 segundos antes de la primera ejecución para dar tiempo al startup
         await Task.Delay(TimeSpan.FromSeconds(120), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -70,24 +70,32 @@ public class ReservaExpirationService : BackgroundService
         using (var scope = _scopeFactory.CreateScope())
         {
             var dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-            // ⚠️ IMPORTANTE: Usa el mismo tipo que tienes en tu proyecto
-            // Si tu proyecto usa ApplicationUser, cambia Usuario por ApplicationUser
             var _userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
             var ahora = DateTime.Now;
 
             try
             {
-                // Obtener la reserva
-                var reserva = await dataContext.Reservas.Where(x=> x.Estado == EstadoReserva.ESPERANDO_ARRIBO).ToListAsync();
+                var reservas = await dataContext.Reservas
+                    .Where(x => x.Estado == EstadoReserva.ESPERANDO_ARRIBO)
+                    .ToListAsync();
 
-                foreach (var r in reserva)
+                Console.WriteLine($"📋 Procesando {reservas.Count} reservas en estado ESPERANDO_ARRIBO");
+
+                int procesadasExitosamente = 0;
+                int conErrores = 0;
+
+                foreach (var r in reservas)
                 {
-                    if (ahora > r.FechaDeExpiracion)
+                    try
                     {
+                        if (ahora <= r.FechaDeExpiracion)
+                        {
+                            // Esta reserva aún no ha expirado, continuar con la siguiente
+                            continue;
+                        }
 
-                        if (r == null)
-                            throw new Exception("Reserva no encontrada");
+                        Console.WriteLine($"🔄 Procesando reserva ID: {r.Id}");
 
                         // Obtener el vehículo
                         var vehiculo = await dataContext.Vehiculos
@@ -95,7 +103,11 @@ public class ReservaExpirationService : BackgroundService
                             .FirstOrDefaultAsync();
 
                         if (vehiculo == null)
-                            throw new Exception("No se encontró el vehículo asociado");
+                        {
+                            Console.WriteLine($"⚠️ Error en reserva {r.Id}: No se encontró el vehículo asociado");
+                            conErrores++;
+                            continue; // Continuar con la siguiente reserva
+                        }
 
                         // Obtener datos del estacionamiento
                         var estacionamiento = await dataContext.Estacionamientos
@@ -103,14 +115,18 @@ public class ReservaExpirationService : BackgroundService
                             .FirstOrDefaultAsync();
 
                         if (estacionamiento == null)
-                            throw new Exception("No se encontró el estacionamiento");
+                        {
+                            Console.WriteLine($"⚠️ Error en reserva {r.Id}: No se encontró el estacionamiento");
+                            conErrores++;
+                            continue; // Continuar con la siguiente reserva
+                        }
 
                         // Obtener datos del cliente
                         var cliente = await _userManager.FindByIdAsync(r.UserId);
 
                         if (cliente == null || string.IsNullOrEmpty(cliente.Email))
                         {
-                            Console.WriteLine("Advertencia: No se pudo obtener el email del cliente");
+                            Console.WriteLine($"⚠️ Advertencia en reserva {r.Id}: No se pudo obtener el email del cliente");
                         }
 
                         // Obtener datos del dueño
@@ -118,38 +134,24 @@ public class ReservaExpirationService : BackgroundService
 
                         if (dueño == null || string.IsNullOrEmpty(dueño.Email))
                         {
-                            Console.WriteLine("Advertencia: No se pudo obtener el email del dueño");
+                            Console.WriteLine($"⚠️ Advertencia en reserva {r.Id}: No se pudo obtener el email del dueño");
                         }
-
 
                         // Actualizar estado de la reserva
                         r.Estado = EstadoReserva.CANCELADO_POR_EL_DUEÑO;
 
-                        // Actualizar contador de vehículos alojados
-                        var datoVehiculoSobreAlojado = await dataContext.DataVehiculoAlojados
-                            .Where(x => x.EstacionamientoId == r.EstacionamientoId &&
-                                        x.TipoDeVehiculo == vehiculo.TipoDeVehiculo)
-                            .FirstOrDefaultAsync();
-
-                        if (datoVehiculoSobreAlojado != null && datoVehiculoSobreAlojado.CantidadActualAlojados > 0)
-                        {
-                            datoVehiculoSobreAlojado.CantidadActualAlojados--;
-                            dataContext.DataVehiculoAlojados.Update(datoVehiculoSobreAlojado);
-                        }
-
                         // Guardar cambios
                         dataContext.Reservas.Update(r);
                         await dataContext.SaveChangesAsync();
+
+                        Console.WriteLine($"✅ Reserva {r.Id} actualizada a estado CANCELADO");
 
                         // Enviar notificación al cliente
                         if (cliente != null && !string.IsNullOrEmpty(cliente.Email))
                         {
                             try
                             {
-
-                                DateTime fechaCreacionMastiempoDeEspera = r.FechaDeCreacion;
-
-                                var notificacion = new CancellationNotificationDTO
+                                var notificacionCliente = new CancellationNotificationDTO
                                 {
                                     // Datos del cliente
                                     Nombre = cliente.Nombre ?? "Cliente",
@@ -158,7 +160,7 @@ public class ReservaExpirationService : BackgroundService
 
                                     // Datos de la reserva
                                     NumeroReserva = r.Id.ToString(),
-                                    FechaHoraReserva = r.FechaDeCreacion, // Ajusta según tu modelo
+                                    FechaHoraReserva = r.FechaDeCreacion,
                                     FechaHoraExpiracion = r.FechaDeExpiracion,
                                     MontoReserva = r.Monto,
 
@@ -173,14 +175,14 @@ public class ReservaExpirationService : BackgroundService
 
                                     // Información de cancelación
                                     FechaHoraCancelacion = DateTime.Now,
-                                    MotivoCancelacion = "La reserva ha sido cancela por que el tiempo de espera de arribo al lugar ha expirado, haz demorado mucho en llegar" // Puedes hacerlo parametrizable
+                                    MotivoCancelacion = "La reserva ha sido cancelada porque el tiempo de espera de arribo al lugar ha expirado, has demorado mucho en llegar"
                                 };
 
-                                bool emailEnviado = await SendCancellationEmail(notificacion);
+                                bool emailEnviado = await SendCancellationEmail(notificacionCliente);
 
                                 if (!emailEnviado)
                                 {
-                                    Console.WriteLine($"Advertencia: Reserva cancelada pero no se pudo enviar email al cliente. ReservaId: {r.Id}");
+                                    Console.WriteLine($"⚠️ Reserva {r.Id} cancelada pero no se pudo enviar email al cliente");
                                 }
                                 else
                                 {
@@ -189,20 +191,17 @@ public class ReservaExpirationService : BackgroundService
                             }
                             catch (Exception emailEx)
                             {
-                                Console.WriteLine($"Error al enviar notificación de cancelación: {emailEx.Message}");
+                                Console.WriteLine($"❌ Error al enviar notificación al cliente (Reserva {r.Id}): {emailEx.Message}");
+                                // No interrumpimos el proceso, continuamos
                             }
                         }
-
 
                         // Enviar notificación al dueño
                         if (dueño != null && !string.IsNullOrEmpty(dueño.Email))
                         {
                             try
                             {
-
-                                DateTime fechaCreacionMastiempoDeEspera = r.FechaDeCreacion;
-
-                                var notificacion = new CancellationNotificationDTO
+                                var notificacionDueño = new CancellationNotificationDTO
                                 {
                                     // Datos del Dueño
                                     Nombre = dueño.Nombre ?? "Dueño",
@@ -211,7 +210,7 @@ public class ReservaExpirationService : BackgroundService
 
                                     // Datos de la reserva
                                     NumeroReserva = r.Id.ToString(),
-                                    FechaHoraReserva = r.FechaDeCreacion, // Ajusta según tu modelo
+                                    FechaHoraReserva = r.FechaDeCreacion,
                                     FechaHoraExpiracion = r.FechaDeExpiracion,
                                     MontoReserva = r.Monto,
 
@@ -226,40 +225,57 @@ public class ReservaExpirationService : BackgroundService
 
                                     // Información de cancelación
                                     FechaHoraCancelacion = DateTime.Now,
-                                    MotivoCancelacion = "La reserva ha sido cancela por que el tiempo de espera de arribo al lugar ha expirado, haz demorado mucho en llegar" // Puedes hacerlo parametrizable
+                                    MotivoCancelacion = "La reserva ha sido cancelada porque el tiempo de espera de arribo al lugar ha expirado, el cliente ha demorado mucho en llegar"
                                 };
 
-                                bool emailEnviado = await SendCancellationEmail(notificacion);
+                                bool emailEnviado = await SendCancellationEmail(notificacionDueño);
 
                                 if (!emailEnviado)
                                 {
-                                    Console.WriteLine($"Advertencia: Reserva cancelada pero no se pudo enviar email al dueño. ReservaId: {r.Id}");
+                                    Console.WriteLine($"⚠️ Reserva {r.Id} cancelada pero no se pudo enviar email al dueño");
                                 }
                                 else
                                 {
-                                    Console.WriteLine($"✅ Notificación de cancelación enviada al dueño: {cliente.Email}");
+                                    Console.WriteLine($"✅ Notificación de cancelación enviada al dueño: {dueño.Email}");
                                 }
                             }
                             catch (Exception emailEx)
                             {
-                                Console.WriteLine($"Error al enviar notificación de cancelación: {emailEx.Message}");
+                                Console.WriteLine($"❌ Error al enviar notificación al dueño (Reserva {r.Id}): {emailEx.Message}");
+                                // No interrumpimos el proceso, continuamos
                             }
                         }
 
+                        procesadasExitosamente++;
+                        Console.WriteLine($"✅ Reserva {r.Id} procesada exitosamente");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Capturamos cualquier error en el procesamiento de esta reserva específica
+                        conErrores++;
+                        Console.WriteLine($"❌ Error al procesar reserva {r.Id}: {ex.Message}");
+                        Console.WriteLine($"   Stack Trace: {ex.StackTrace}");
 
+                        // Continuamos con la siguiente reserva sin interrumpir el foreach
+                        continue;
                     }
                 }
-                       
+
+                // Resumen final del procesamiento
+                Console.WriteLine($"\n📊 Resumen del procesamiento:");
+                Console.WriteLine($"   Total de reservas analizadas: {reservas.Count}");
+                Console.WriteLine($"   ✅ Procesadas exitosamente: {procesadasExitosamente}");
+                Console.WriteLine($"   ❌ Con errores: {conErrores}");
             }
             catch (Exception e)
             {
-                
+                // Este catch solo captura errores al obtener la lista inicial de reservas
+                Console.WriteLine($"❌ Error crítico al obtener las reservas: {e.Message}");
+                Console.WriteLine($"   Stack Trace: {e.StackTrace}");
             }
-
         }
     }
 
- 
     /// <summary>
     /// Envía el correo de notificación de cancelación por expiración
     /// </summary>

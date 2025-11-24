@@ -42,9 +42,9 @@ namespace EasyParkingAPI.Controllers
                     throw new Exception("ERROR ... Usuario sin permisos necesarios.");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw;
             }
         }
 

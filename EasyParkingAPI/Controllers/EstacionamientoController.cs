@@ -85,7 +85,7 @@ namespace EasyParkingAPI.Controllers
             {
                 DataContext dataContext = new DataContext();
                 var estacionamientos = await dataContext.Estacionamientos.Include("Jornadas.Horarios").AsNoTracking()
-                .Include("TiposDeVehiculosAdmitidos").AsNoTracking().Where(x => x.Inactivo == false && x.PublicacionPausada == false).AsNoTracking().ToListAsync();
+                .Include("Plazas").Include("Tarifas").AsNoTracking().Where(x => x.Inactivo == false && x.PublicacionPausada == false).AsNoTracking().ToListAsync();
 
                 ///var vehiculo = await dataContext.Vehiculos.Where(x => x.UserId == _UserId && x.Patente == "AA658V").AsNoTracking().FirstOrDefaultAsync();
 
@@ -127,7 +127,7 @@ namespace EasyParkingAPI.Controllers
                 return BadRequest(Tools.Tools.ExceptionMessage(e));
             }
         }
-
+       
         [HttpGet]
         [Route("[action]")]
         public async Task<ActionResult<List<EstacionamientoDTO>>> GetMisEstacionamientosAsync()
@@ -135,18 +135,26 @@ namespace EasyParkingAPI.Controllers
             try
             {
                 DataContext dataContext = new DataContext();
-                var lista = await dataContext.Estacionamientos.Include("Jornadas.Horarios")
-                .Include("TiposDeVehiculosAdmitidos").Where(x => x.UserId == _UserId && x.Inactivo == false).AsNoTracking().ToListAsync(); // Retorna los estacionamientos de la persona logeada
+                var lista = await dataContext.Estacionamientos
+                    .Include(e => e.Jornadas)
+                        .ThenInclude(j => j.Horarios)
+                    .Include(e => e.Tarifas)
+                    .Include(e => e.Plazas)
+                    .AsNoTracking()
+                    .Where(x => x.UserId == _UserId && x.Inactivo == false)
+                    .ToListAsync();
 
-                if (lista == null)
+                if (lista == null || !lista.Any())
                 {
-                    return NotFound();
+                    return NoContent();
                 }
 
                 var listaDTO = new List<ServiceWebApi.DTO.EstacionamientoDTO>();
-
                 foreach (var item in lista)
                 {
+                    // Filtrar las plazas activas después de traer los datos
+                    item.Plazas = item.Plazas?.Where(p => p.Activo == true).ToList();
+
                     var estacionamientoDTO = new ServiceWebApi.DTO.EstacionamientoDTO();
                     estacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, ServiceWebApi.DTO.EstacionamientoDTO>.Copy(item, estacionamientoDTO);
 
@@ -155,22 +163,17 @@ namespace EasyParkingAPI.Controllers
                         .Where(r => r.EstacionamientoId == item.Id)
                         .ToListAsync();
                     var averagePuntaje = reseñas.Any() ? reseñas.Average(r => r.Puntaje ?? 0) : 0;
-
                     estacionamientoDTO.Puntaje = averagePuntaje;
 
                     listaDTO.Add(estacionamientoDTO);
                 }
-
                 return listaDTO;
-
             }
             catch (Exception e)
             {
-
                 return BadRequest(Tools.Tools.ExceptionMessage(e));
             }
         }
-
 
 
         [HttpGet("[action]/{estacionamientoId}")]
@@ -180,7 +183,7 @@ namespace EasyParkingAPI.Controllers
             {
                 DataContext dataContext = new DataContext();
                 var estacionamiento = await dataContext.Estacionamientos.Include("Jornadas.Horarios")
-                  .Include("TiposDeVehiculosAdmitidos").FirstOrDefaultAsync(x => x.Id == estacionamientoId);
+                  .Include("Plazas").Include("Tarifas").AsNoTracking().FirstOrDefaultAsync(x => x.Id == estacionamientoId);
 
                 if (estacionamiento == null)
                 {
@@ -226,7 +229,7 @@ namespace EasyParkingAPI.Controllers
             {
                 DataContext dataContext = new DataContext();
                 var estacionamiento = await dataContext.Estacionamientos.Include("Jornadas.Horarios")
-                                            .Include("TiposDeVehiculosAdmitidos").OrderBy(x => x.MontoReserva).ToListAsync();
+                                            .Include("Plazas").Include("Tarifas").AsNoTracking().OrderBy(x => x.MontoReserva).ToListAsync();
 
                 if (estacionamiento == null)
                 {
@@ -283,7 +286,7 @@ namespace EasyParkingAPI.Controllers
             {
                 DataContext dataContext = new DataContext();
                 var estacionamientos = await dataContext.Estacionamientos.Include("Jornadas.Horarios")
-                .Include("TiposDeVehiculosAdmitidos").Where(x => x.Direccion.Contains(text) || x.Nombre.Contains(text)).ToListAsync();
+                .Include("Plazas").Include("Tarifas").AsNoTracking().Where(x => x.Direccion.Contains(text) || x.Nombre.Contains(text)).ToListAsync();
 
                 if (estacionamientos == null)
                 {
@@ -307,7 +310,7 @@ namespace EasyParkingAPI.Controllers
             {
                 DataContext dataContext = new DataContext();
                 var estacionamientos = await dataContext.Estacionamientos.Include("Jornadas.Horarios")
-                .Include("TiposDeVehiculosAdmitidos").ToListAsync();
+                .Include("Plazas").Include("Tarifas").AsNoTracking().ToListAsync();
 
 
                 if (estacionamientos == null)
@@ -319,7 +322,7 @@ namespace EasyParkingAPI.Controllers
 
                 foreach (var item in estacionamientos)
                 {
-                    foreach (var i in item.TiposDeVehiculosAdmitidos)
+                    foreach (var i in item.Plazas)
                     {
                         if (i.TipoDeVehiculo == vehiculo)
                         {
@@ -352,7 +355,7 @@ namespace EasyParkingAPI.Controllers
             {
                 DataContext dataContext = new DataContext();
                 var estacionamientos = await dataContext.Estacionamientos.Include("Jornadas.Horarios")
-                .Include("TiposDeVehiculosAdmitidos").Where(x => x.TipoDeLugar == tipoDeLugar).ToListAsync();
+                .Include("Plazas").Include("Tarifas").AsNoTracking().Where(x => x.TipoDeLugar == tipoDeLugar).ToListAsync();
 
 
                 if (estacionamientos == null)
@@ -380,13 +383,18 @@ namespace EasyParkingAPI.Controllers
                     return BadRequest("El texto de búsqueda no puede estar vacío.");
 
                 DataContext dataContext = new DataContext();
-
                 string texto = textoBusqueda.Trim().ToLower();
+
+                // Obtener todos los valores del enum que coincidan
+                var tiposVehiculoCoincidentes = Enum.GetValues(typeof(TipoDeVehiculo))
+                    .Cast<TipoDeVehiculo>()
+                    .Where(t => t.ToString().ToLower().Contains(texto))
+                    .ToList();
 
                 var query = dataContext.Estacionamientos
                     .Include(e => e.Jornadas)
                         .ThenInclude(j => j.Horarios)
-                    .Include(e => e.TiposDeVehiculosAdmitidos)
+                    .Include(e => e.Plazas)
                     .AsNoTracking()
                     .Where(e => !e.Inactivo && !e.PublicacionPausada)
                     .Where(e =>
@@ -394,9 +402,8 @@ namespace EasyParkingAPI.Controllers
                         e.Nombre.ToLower().Contains(texto) ||
                         e.Direccion.ToLower().Contains(texto) ||
                         e.TipoDeLugar.ToLower().Contains(texto) ||
-                        e.TiposDeVehiculosAdmitidos.Any(v => v.TipoDeVehiculo.ToString().ToLower().Contains(texto))
-                    )
-                    .AsQueryable();
+                        e.Plazas.Any(v => tiposVehiculoCoincidentes.Contains(v.TipoDeVehiculo))
+                    );
 
                 var estacionamientos = await query.ToListAsync();
 
@@ -407,12 +414,11 @@ namespace EasyParkingAPI.Controllers
                     EstacionamientoDTO estacionamientoDTO = new EstacionamientoDTO();
                     estacionamientoDTO = Tools.Tools.PropertyCopier<Estacionamiento, EstacionamientoDTO>.Copy(item, estacionamientoDTO);
 
-                    // Calculate the average Puntaje, handling empty sequences
                     var reseñas = await dataContext.Reseñas
                         .Where(r => r.EstacionamientoId == item.Id)
                         .ToListAsync();
-                    var averagePuntaje = reseñas.Any() ? reseñas.Average(r => r.Puntaje ?? 0) : 0;
 
+                    var averagePuntaje = reseñas.Any() ? reseñas.Average(r => r.Puntaje ?? 0) : 0;
                     estacionamientoDTO.Puntaje = averagePuntaje;
 
                     listaDTO.Add(estacionamientoDTO);
@@ -424,7 +430,6 @@ namespace EasyParkingAPI.Controllers
             {
                 return BadRequest(Tools.Tools.ExceptionMessage(e));
             }
-
         }
 
         [HttpGet]
@@ -460,10 +465,14 @@ namespace EasyParkingAPI.Controllers
             {
                 using var dataContext = new DataContext();
 
+                if (!dataContext.Estacionamientos.Any())
+                    return null;
+
                 var query = dataContext.Estacionamientos
                     .Include(e => e.Jornadas)
                         .ThenInclude(j => j.Horarios)
-                    .Include(e => e.TiposDeVehiculosAdmitidos)
+                    .Include(e => e.Plazas)
+                    .Include(e => e.Tarifas)
                     .AsNoTracking()
                     .Where(e => !e.Inactivo && !e.PublicacionPausada)
                     .AsQueryable();
@@ -477,9 +486,26 @@ namespace EasyParkingAPI.Controllers
                 // Filtro por tipo de vehículo admitido
                 if (filtros.TipoDeVehiculos != null && filtros.TipoDeVehiculos.Any())
                 {
-                    query = query.Where(e =>
-                        e.TiposDeVehiculosAdmitidos.Any(v =>
-                            filtros.TipoDeVehiculos.Contains(v.TipoDeVehiculo.ToString())));
+                    // Normalizamos a minúsculas
+                    var tiposNormalizados = filtros.TipoDeVehiculos.Select(t => t.ToLower()).ToList();
+
+                    // Mapeamos los strings a enums
+                    var tiposDeVehiculoEnum = new List<TipoDeVehiculo>();
+
+                    if (tiposNormalizados.Contains("auto"))
+                        tiposDeVehiculoEnum.Add(TipoDeVehiculo.AUTO);
+
+                    if (tiposNormalizados.Contains("camioneta"))
+                        tiposDeVehiculoEnum.Add(TipoDeVehiculo.CAMIONETA);
+
+                    if (tiposNormalizados.Contains("moto"))
+                        tiposDeVehiculoEnum.Add(TipoDeVehiculo.MOTO);
+
+                    // Filtramos estacionamientos que tengan AL MENOS UNO de los tipos solicitados
+                    if (tiposDeVehiculoEnum.Any())
+                    {
+                        query = query.Where(e => e.Plazas.Any(p => tiposDeVehiculoEnum.Contains(p.TipoDeVehiculo)));
+                    }
                 }
 
                 // Filtro por ciudad
@@ -683,14 +709,7 @@ namespace EasyParkingAPI.Controllers
                 estacionamiento = Tools.Tools.PropertyCopier<EstacionamientoDTO, Estacionamiento>
                     .Copy(estacionamientoDTO, estacionamiento);
 
-                // Manejo de Tipos de Vehículos
-                var lista_TipoVehiculosAlojados = dataContext.DataVehiculoAlojados
-                    .Where(x => x.EstacionamientoId == estacionamiento.Id);
-
-                foreach (var item in lista_TipoVehiculosAlojados)
-                {
-                    dataContext.DataVehiculoAlojados.Remove(item);
-                }
+               
 
                 // Manejo de Tipos de Vehículos
                 var lista_Jornadas = dataContext.Jornadas
@@ -701,12 +720,16 @@ namespace EasyParkingAPI.Controllers
                     dataContext.Jornadas.Remove(item);
                 }
 
-                foreach (var item in lista_TipoVehiculosAlojados)
+                var tarifas = dataContext.Tarifas
+                        .Where(x => x.EstacionamientoId == estacionamiento.Id);
+
+                foreach (var item in tarifas)
                 {
-                    dataContext.DataVehiculoAlojados.Remove(item);
+                    dataContext.Tarifas.Remove(item);
                 }
 
- 
+
+
                 // Guardar/Actualizar imagen
                 string fileName = null;
                 if (estacionamientoDTO.ImageBytes != null && estacionamientoDTO.ImageBytes.Length > 0)

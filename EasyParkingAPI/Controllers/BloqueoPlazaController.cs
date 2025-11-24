@@ -1,5 +1,7 @@
 ﻿using EasyParkingAPI.Data;
 using EasyParkingAPI.Model;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,18 +13,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
 namespace EasyParkingAPI.Controllers
 {
     [Produces("application/json")]
     [Route("api/[controller]")]
-    public class ReseñaController : Controller
+    public class BloqueoPlazaController : Controller
     {
         private readonly IConfiguration _configuration;
         private readonly string _UserId;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public ReseñaController(IConfiguration configuration,
+        public BloqueoPlazaController(IConfiguration configuration,
                                             IHttpContextAccessor httpContextAccessor,
                                             UserManager<ApplicationUser> userManager)
         {
@@ -48,61 +49,64 @@ namespace EasyParkingAPI.Controllers
             }
         }
 
+
         [HttpGet]
-        [Route("[action]/{estacionamientoId}")]
-        public async Task<ActionResult<List<ReseñaDTO>>> GetByEstacionamientoAsync(int estacionamientoId) // consulta por nombre o direccion del estacionamiento
+        [Route("[action]")]
+        public async Task<ActionResult<List<BloqueoPlaza>>> GetMisBloqueos()
         {
             try
             {
                 DataContext dataContext = new DataContext();
-                var reseñas = await dataContext.Reseñas.Where(x => x.EstacionamientoId == estacionamientoId).ToListAsync();
+                var lista = await dataContext.BloqueoPlazas.Where(x=> x.UserId == _UserId && x.Activo == true && x.FechaInicio > DateTime.Now).ToListAsync();
 
-
-                if (reseñas == null)
+                if (lista == null || !lista.Any())
                 {
-                    return NotFound();
+                    return NoContent();
                 }
-
-                List<ServiceWebApi.DTO.ReseñaDTO> listaDTO = new List<ServiceWebApi.DTO.ReseñaDTO>();
-
-
-                foreach (var item in reseñas)
+                else
                 {
-                    ServiceWebApi.DTO.ReseñaDTO reseñaDTO = new ServiceWebApi.DTO.ReseñaDTO();
-                    reseñaDTO = Tools.Tools.PropertyCopier<Reseña, ServiceWebApi.DTO.ReseñaDTO>.Copy(item, reseñaDTO);
-
-                    ApplicationUser appuserCliente = _userManager.FindByIdAsync(reseñaDTO.EmisorId).Result; // Obtengo los datos del usuario logeado
-                    reseñaDTO.NombreCliente = appuserCliente.Nombre;
-                    var fileName = appuserCliente.Id + ".jpg";
-                    reseñaDTO.URLImagenCliente = $"http://40.118.242.96:12595/images/usuarios/{fileName}";
-
-                    listaDTO.Add(reseñaDTO);
+                    return lista;
                 }
-
-
-
-
-                return listaDTO;
-
             }
             catch (Exception e)
             {
+                return BadRequest(Tools.Tools.ExceptionMessage(e));
+            }
+        }
 
+
+        [HttpPost]
+        [Route("[action]")]
+        public async Task<ActionResult> AddAsync([FromBody] BloqueoPlaza  bloqueoPlaza)
+        {
+            try
+            {
+                DataContext dataContext = new DataContext();
+                bloqueoPlaza.UserId = _UserId;
+                await dataContext.BloqueoPlazas.AddAsync(bloqueoPlaza);
+                await dataContext.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception e)
+            {
                 return BadRequest(Tools.Tools.ExceptionMessage(e));
             }
         }
 
         [HttpPost]
         [Route("[action]")]
-        public async Task<ActionResult> AddAsync([FromBody] Reseña reseña)
+        public async Task<ActionResult> AddMultipleAsync([FromBody] List<BloqueoPlaza> bloqueoPlazas)
         {
             try
             {
                 DataContext dataContext = new DataContext();
 
+                foreach (var item in bloqueoPlazas)
+                {
+                    item.UserId = _UserId;
+                }
 
-                reseña.FechaHora = DateTime.Now;
-                await dataContext.Reseñas.AddAsync(reseña);
+                dataContext.BloqueoPlazas.AddRange(bloqueoPlazas);
                 await dataContext.SaveChangesAsync();
                 return Ok();
             }
@@ -113,6 +117,23 @@ namespace EasyParkingAPI.Controllers
         }
 
 
+        [HttpDelete("[action]/{bloqueoPlazaId}")]
+        public async Task<ActionResult> DeleteAsync(int bloqueoPlazaId)
+        {
+            try
+            {
+                DataContext dataContext = new DataContext();
+                var bloqueoPlaza = await dataContext.BloqueoPlazas.FirstOrDefaultAsync(x => x.Id == bloqueoPlazaId && x.UserId == _UserId);
+                dataContext.BloqueoPlazas.Remove(bloqueoPlaza);
+                await dataContext.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(Tools.Tools.ExceptionMessage(e));
+            }
+        }
     }
-}
 
+
+}

@@ -23,13 +23,16 @@ namespace EasyParkingAPI.Data
 
         public DbSet<Estacionamiento> Estacionamientos { get; set; }
         public DbSet<Jornada> Jornadas { get; set; }
-        public DbSet<DataVehiculoAlojado> DataVehiculoAlojados { get; set; }
+
+       // public DbSet<DataVehiculoAlojado> DatVehiculoAlojados { get; set; }
         public DbSet<RangoH> RangoHs { get; set; }
         public DbSet<Favorito> Favoritos { get; set; }
         public DbSet<Vehiculo> Vehiculos { get; set; }
         public DbSet<Reserva> Reservas { get; set; }
         public DbSet<Reseña> Reseñas { get; set; }
         public DbSet<Plaza> Plazas { get; set; }
+        public DbSet<BloqueoPlaza> BloqueoPlazas { get; set; }
+        public DbSet<Tarifa> Tarifas { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -54,16 +57,17 @@ namespace EasyParkingAPI.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Estacionamiento>()
-                .HasMany(e => e.TiposDeVehiculosAdmitidos)
-                .WithOne() // No tenemos navegación inversa en TiposDeVehiculosAdmitidos, si quieres puedes poner: .WithOne(j => j.Estacionamiento)
-                .HasForeignKey(j => j.EstacionamientoId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Estacionamiento>()
                 .HasMany(e => e.Plazas)
                 .WithOne() // No tenemos navegación inversa en Plazas, si quieres puedes poner: .WithOne(j => j.Estacionamiento)
                 .HasForeignKey(j => j.EstacionamientoId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Estacionamiento>()
+                .HasMany(e => e.Tarifas)
+                .WithOne() // No tenemos navegación inversa en Tarifas, si quieres puedes poner: .WithOne(j => j.Estacionamiento)
+                .HasForeignKey(j => j.EstacionamientoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             //***************************************************************************************************
             // FAVORITO
             //***************************************************************************************************
@@ -120,24 +124,24 @@ namespace EasyParkingAPI.Data
                 );
 
             //***************************************************************************************************
-            // DATA VEHICULO ALOJADO
-            //***************************************************************************************************
-            modelBuilder.Entity<DataVehiculoAlojado>()
-                .HasKey(c => c.Id);
-
-            modelBuilder.Entity<DataVehiculoAlojado>()
-            .Property(e => e.TipoDeVehiculo)
-            .HasConversion(
-                v => v.ToString(),
-                v => (TipoDeVehiculo)Enum.Parse(typeof(TipoDeVehiculo), v));
-
-            //***************************************************************************************************
             // PLAZAS
             //***************************************************************************************************
             modelBuilder.Entity<Plaza>()
                 .HasKey(c => c.Id);
 
             modelBuilder.Entity<Plaza>()
+                .Property(e => e.TipoDeVehiculo)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => (TipoDeVehiculo)Enum.Parse(typeof(TipoDeVehiculo), v));
+
+            //***************************************************************************************************
+            // TARIFAS
+            //***************************************************************************************************
+            modelBuilder.Entity<Tarifa>()
+                .HasKey(c => c.Id);
+
+            modelBuilder.Entity<Tarifa>()
                 .Property(e => e.TipoDeVehiculo)
                 .HasConversion(
                     v => v.ToString(),
@@ -154,6 +158,18 @@ namespace EasyParkingAPI.Data
             //***************************************************************************************************
             modelBuilder.Entity<Reseña>()
                 .HasKey(c => c.Id);
+
+            //***************************************************************************************************
+            // BLOQUEO DE PLAZAS
+            //***************************************************************************************************
+            modelBuilder.Entity<BloqueoPlaza>()
+                .HasKey(c => c.Id);
+
+            modelBuilder.Entity<BloqueoPlaza>()
+            .Property(e => e.TipoDeVehiculo)
+            .HasConversion(
+                v => v.ToString(),
+                v => (TipoDeVehiculo)Enum.Parse(typeof(TipoDeVehiculo), v));
         }
     }
 }

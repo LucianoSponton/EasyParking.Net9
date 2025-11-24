@@ -115,13 +115,22 @@ builder.Services.AddSwaggerGen(c =>
 // ======================================================
 // ?? CORS
 // ======================================================
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("CorsPolicy", policy =>
+//        policy.AllowAnyOrigin()
+//              .AllowAnyMethod()
+//              .AllowAnyHeader());
+//});
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", policy =>
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader());
+    options.AddPolicy("AllowAll",
+        builder => builder
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
 });
+
 
 // ======================================================
 // ?? Autenticación JWT
@@ -201,7 +210,9 @@ if (!string.IsNullOrEmpty(usuariosFolder) && Directory.Exists(usuariosFolder))
 
 
 app.UseHttpsRedirection();
-app.UseCors("CorsPolicy");
+//app.UseCors("CorsPolicy");
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 //app.UseMiddleware<LogUserNameMiddleware>();
